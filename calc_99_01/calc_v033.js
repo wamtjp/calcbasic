@@ -30,7 +30,7 @@
 	//	lbl=[];
 
 	//単なる準備
-	message = "解答中"
+	message = "かいとう"
 	mystatus = 1
 	TRUE=0;FALSE=1;MID=2;
 	flgALLresult = MID;
@@ -344,11 +344,11 @@ function dispOxMessage(){
 
 		//メッセージ表示
 		if(flgALLresult==TRUE){
-			message = "正解"
+			message = "せいかい"
 			lblMessage = new makeLabelNoFill(message, 55*s, W1+w*30, h*36,  0,255,0);
 			lblMessage.disp();
 		}else{
-			message = "残念"
+			message = "ざんねん"
 			lblMessage = new makeLabelNoFill(message, 50*s, W1+w*30, h*36,  255,0,0);
 			lblMessage.disp();
 		}
@@ -377,7 +377,7 @@ function dispScore(){
 
 	//テキスト枠
 	//スコア-ポイント1表示(連続正解記録)
-	lblScoreText1 = new makeLabelNoFill("連続正解", 12*s, W1+w*47.5, h*36,  255,255,255);
+	lblScoreText1 = new makeLabelNoFill("れんぞく", 12*s, W1+w*47.5, h*36,  255,255,255);
 	lblScoreText1.disp();
 
 	lblScorePoint = new makeLabelNoFill(point1, 50*s, W1+w*54, h*36,  255,255,255);
@@ -387,13 +387,13 @@ function dispScore(){
 	if(point1==MAXcontinuePoint){
 		fill(255,0,0);rectMode(CORNER);
 		rect(W1+w*0,h*0, w*62, h*41);
-		lblClearText1 = new makeLabelNoFill("連続" + MAXcontinuePoint + "回クリア", 60*s, W1+w*30, h* 15,  255,255,255);
+		lblClearText1 = new makeLabelNoFill("" + MAXcontinuePoint + "かい クリア", 60*s, W1+w*30, h* 15,  255,255,255);
 		lblClearText1.disp();
 
 
 //		fill(255,255,255);textSize(60*s);
 //		text("素晴らしい！",W1+w*30, h*30)
-		lblClearText2 = new makeLabelNoFill("素晴らしい！", 60*s, W1+w*30, h* 30,  255,255,255);
+		lblClearText2 = new makeLabelNoFill("すばらしい！", 60*s, W1+w*30, h* 30,  255,255,255);
 		lblClearText2.disp();
 	}
 }
@@ -417,14 +417,14 @@ function dispButton(){
 	fill(0,255,255)
 	rect(W1+w*50, H2+h*18,w*14,h*32)
 	fill(0, 0, 255); textSize(40*s);
-	text("次",W1+w*50, H2+h*18)
+	text("つぎ",W1+w*50, H2+h*18)
 
 	//★★「取り消し」表示
 	rectMode(CENTER); textAlign(CENTER, CENTER)
 	fill(255,0,0)
 	rect(W1+w*50, H2+h*42,w*14,h*8)
 	fill(255, 255, 255); textSize(40*s);
-	text("消",W1+w*50, H2+h*(42))
+	text("けす",W1+w*50, H2+h*(42))
 }
 
 //---------------------------------------------
@@ -487,7 +487,7 @@ function dealEachButton(){
 				for (i=1; i<=num_MyAns; i++){ ox[i] = "";}
 				mystatus = 1;
 				if(point1==MAXcontinuePoint){point1=0;}
-				btnNumNOW=999; flgALLresult = MID; message="解答中"
+				btnNumNOW=999; flgALLresult = MID; message="かいとう"
 			}
 		}
 		//★★「取り消し
