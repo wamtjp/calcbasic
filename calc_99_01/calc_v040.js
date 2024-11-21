@@ -114,7 +114,8 @@ function setup(){
 
 
 function draw() {
-	background(0,(point1*25)+5,(point1*26))
+	pluscolor = int(255/MAXcontinuePoint)
+	background(0,(point1*pluscolor)+5,(point1*pluscolor))
 	textSize(12*s); fill(255,255,255);
 	text("mystatus " + mystatus,w*44,h*94)
 	dispProblem();	//問題表示
