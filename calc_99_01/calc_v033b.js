@@ -5,7 +5,7 @@
 
 //確認が必要な準備
 num_MyAns = 2;
-MAXcontinuePoint = 10;
+MAXcontinuePoint = 50;
 b_disp = ["7", "8", "9", "4", "5", "6", "1", "2", "3", "-", "0", ".", "+"];
 // b_real = ["7","8","9","4","5","6","1","2","3","-","0",".","+"]
 NEXTnum = 20;
@@ -138,10 +138,15 @@ function setup() {
   // 不要？	init();
   makeProblem();
   choiceProblem();
+
+  // 背景色をよりモダンな深い紺色に
+  background(25, 35, 60);
 }
 
 function draw() {
-  background(0, point1 * 25 + 5, point1 * 26);
+  // 背景色を深い紺色のグラデーションに
+  background(25, 35, 60);
+
   textSize(12 * s);
   fill(255, 255, 255);
   text("mystatus " + mystatus, w * 44, h * 94);
@@ -308,7 +313,7 @@ function dispMyAnswer() {
   //符号枠
   //rectMode(CENTER); fill(255, 128, 197);
   //rect(W1+w*16, h*24, w*9, h*13);
-  //解答枠(緑)
+  //解答(緑)
   //自分の解答表示
   lblMyAns1 = new makeLabelFill(
     myAns[1],
@@ -331,8 +336,9 @@ function dispMyAnswer() {
     KaitouHeight,
     w * 6,
     h * 6,
-    0,
-    255,
+    46,
+    204,
+    113,
     0,
     0,
     0,
@@ -343,7 +349,7 @@ function dispMyAnswer() {
 
   //今から解答する枠(赤)
   rectMode(CENTER);
-  fill(255, 0, 0);
+  fill(231, 76, 60);
   if (mystatus == 1) {
     rect(wMyanswer1, KaitouHeight, w * 6, h * 6);
   }
@@ -364,7 +370,7 @@ function dispOxMessage() {
     lblOX2.disp();
   }
 
-  //解答入力が終了したら
+  //解答入力が終了した
   if (mystatus >= num_MyAns + 1) {
     //正解表示
     flgALLresult = TRUE;
@@ -449,9 +455,9 @@ function dispScore() {
     12 * s,
     W1 + w * 47.5,
     h * 36,
-    255,
-    255,
-    255
+    41,
+    128,
+    185 // ← ここだけ変更：深みのあるブルー
   );
   lblScoreText1.disp();
 
@@ -505,12 +511,16 @@ function dispButton() {
     j = int(n / 3);
     posX = w * 12 + i * w * 12;
     posY = h * 6 + j * h * 12;
-    fill(0, 0, 255);
-    if (n == 9 || n == 12) {
-      fill(255, 128, 197);
+
+    // 数字ボタンの色を変更
+    if (n <= 9) {
+      fill(65, 105, 225); // ロイヤルブルー
+    } else if (n == 9 || n == 12) {
+      fill(147, 112, 219); // ミディアムパープル
     }
     ellipse(W1 + posX, H2 + posY, r1 * 8, r1 * 8);
-    fill(0, 255, 0);
+
+    fill(255, 255, 255); // ボタンの文字色を白に
     textSize(30 * s);
     if (n == 9 || n == 12) {
       fill(0, 0, 255);
@@ -521,7 +531,7 @@ function dispButton() {
   //「次」表示
   rectMode(CENTER);
   textAlign(CENTER, CENTER);
-  fill(0, 255, 255);
+  fill(41, 128, 185);
   rect(W1 + w * 50, H2 + h * 18, w * 14, h * 32);
   fill(0, 0, 255);
   textSize(40 * s);
@@ -530,13 +540,25 @@ function dispButton() {
   //★★「取り消し」表示
   rectMode(CENTER);
   textAlign(CENTER, CENTER);
-  fill(255, 0, 0);
+  fill(52, 152, 219);
   rect(W1 + w * 50, H2 + h * 42, w * 14, h * 8);
   fill(255, 255, 255);
   textSize(40 * s);
   text("けす", W1 + w * 50, H2 + h * 42);
-}
 
+  //「かいとう」の文字色だけ変更
+  fill(0);
+  textSize(30 * s);
+  fill(240, 248, 255); // ← ここだけ変更：文字色をアリスブルーに
+  //text("かいとうちゅう", W1 + w * 25, H2 - h * 20);
+
+  // 「れんぞく」ボタンの色だけを変更
+  fill(41, 128, 185); // ← ここだけ変更：深みのあるブルー
+  //rect(W1 + w * 50, H2 + h * 52, w * 14, h * 8);
+  fill(240, 248, 255); // ← 文字色もアリスブルーに
+  textSize(40 * s);
+  //text("れんぞく", W1 + w * 50, H2 + h * 52);
+}
 //---------------------------------------------
 
 function buttonNumNOW() {
@@ -545,7 +567,7 @@ function buttonNumNOW() {
   let tchY = mouseY;
   let tX = tchX - w * 6 - W1;
   let tY = tchY - H2;
-  //「数字・符号」
+  //数字・符号」
   if (0 + W1 <= tX && tX + W1 <= w * 36 && 0 <= tY && tY <= h * 60) {
     let ii = int(tX / (w * 12));
     let jj = int(tY / (h * 12));
@@ -597,7 +619,7 @@ function dealEachButton() {
         message = "かいとう";
       }
     }
-    //★★「取り消し
+    //★★「取り消���
     if (btnNumNOW == DELETE1num) {
       if (2 <= mystatus && mystatus <= num_MyAns) {
         FLG = "";

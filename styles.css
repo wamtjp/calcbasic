@@ -1,0 +1,31 @@
+:root {
+  --primary-color: #4CAF50;     // 爽やかなグリーン
+  --accent-color: #FF9800;      // 元気なオレンジ
+  --background-color: #F5F5F5;  // 軽やかな背景色
+}
+
+.button {
+  transition: transform 0.2s;
+  border-radius: 25px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
+
+function showFeedback(success) {
+  const feedback = document.createElement('div');
+  feedback.className = `feedback ${success ? 'success' : 'error'}`;
+  feedback.innerHTML = success ? '🎉 正解！' : '😢 もう一度チャレンジ！';
+}
+
+body {
+    background-color: #F0F8FF;  /* アリスブルー：柔らかい空色 */
+}
+
+h1 {
+    color: blue !important;
+    font-size: 30px !important;
+}
