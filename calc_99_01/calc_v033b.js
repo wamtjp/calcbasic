@@ -5,7 +5,7 @@
 
 //確認が必要な準備
 num_MyAns = 2;
-MAXcontinuePoint = 50;
+MAXcontinuePoint = 20;
 b_disp = ["7", "8", "9", "4", "5", "6", "1", "2", "3", "-", "0", ".", "+"];
 // b_real = ["7","8","9","4","5","6","1","2","3","-","0",".","+"]
 NEXTnum = 20;
@@ -619,7 +619,7 @@ function dealEachButton() {
         message = "かいとう";
       }
     }
-    //★★「取り消���
+    //★★「取り消$FFFD$FFFD$FFFD
     if (btnNumNOW == DELETE1num) {
       if (2 <= mystatus && mystatus <= num_MyAns) {
         FLG = "";
