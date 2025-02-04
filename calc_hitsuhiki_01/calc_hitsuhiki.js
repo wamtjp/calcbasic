@@ -6,8 +6,8 @@
 //初期設定begin
 
 // 確認が必要な準備
-NOWversion="1.03"
-num_MyAns = 3;
+NOWversion="1.00"
+num_MyAns = 2;
 MAXcontinuePoint = 10;
 b_disp = ["7","8","9","4","5","6","1","2","3","-","0","+","."]
 // b_real = ["7","8","9","4","5","6","1","2","3","-","0",".","+"]
@@ -18,7 +18,8 @@ btnNumNOW=999
 
 prb1=[]; prb2=[];prb3=[]; prb4=[];
 
-ans1 = []; ans2 = []; ans3 = [];
+ans1 = []; ans2 = [];
+//ans3 = [];
 myAns = []; myAns[0] = ""; myAns[1] = ""; myAns[2] = ""; myAns[3] = "";
 ox = []; ox[1] = ""; ox[2] = ""; ox[3] = "";
 nowRcnt=0;
@@ -53,7 +54,7 @@ point1=0;
 
 // ProblemDataのデータを外部ファイルから読み込む
 
-fetch('datacalc_hituskake.json') // 外部ファイルのパスを指定
+fetch('datacalc_hitsuhiki.json') // 外部ファイルのパスを指定
     .then(response => response.json())
     .then(data => {
         array_jsonData = data; // 読み込んだデータをProblemDataに設定
@@ -104,20 +105,19 @@ function touchStarted(){
 function makeProblem(){
 	//★★★問題・解答作成
 	//array_jsonData=[
-	//["A3","A2","A1","B1","ans1","ans2","ans3"],
+	//["A1","A2","B1","B2","ans1","ans2"],
 	console.log("array_jsonData.length[] =",array_jsonData.length);
 	for(let i=1; i<array_jsonData.length; i++){
 
-		prb1[i] = array_jsonData[i][0]	//A3
+		prb1[i] = array_jsonData[i][0]	//A1
 		prb2[i] = array_jsonData[i][1]	//A2
-		prb3[i] = array_jsonData[i][2]	//A1
-		prb4[i] = array_jsonData[i][3]	//B1
+		prb3[i] = array_jsonData[i][2]	//B1
+		prb4[i] = array_jsonData[i][3]	//B2
 		ans1[i] = array_jsonData[i][4]	//ans1
 		ans2[i] = array_jsonData[i][5]	//ans2
-		ans3[i] = array_jsonData[i][6]	//ans3
 
-		console.log(i+"->>"+prb1[i]+":"+prb2[i]+":"+prb3[i]+"*"+prb4[i]
-		+" = "+ans3[i]+":"+ans2[i]+":"+ans1[i]);
+		console.log(i+"->>"+prb1[i]+":"+prb2[i]+"-"+prb3[i]+":"+prb4[i]
+			+" = "+ans2[i]+":"+ans1[i]);
 	}
 	choiceProblem()
 }
@@ -126,12 +126,12 @@ function choiceProblem(){
 	//★★★問題番号を乱数で決定
 	nowRcnt=int(random(1, array_jsonData.length));
 	let i=nowRcnt;
-	console.log(nowRcnt+"->>"+prb1[i]+":"+prb2[i]+":"+prb3[i]+"*"+prb4[i]+" = "+ans3[i]+":"+ans2[i]+":"+ans1[i]
-	);
+	console.log(nowRcnt+"->>"+prb1[i]+":"+prb2[i]+"-"+prb3[i]+":"+prb4[i]
+		+" = "+ans2[i]+":"+ans1[i]);
 //	nowRcnt=1;//1～3までの乱数
 	ans[1] = ans1[nowRcnt];
 	ans[2] = ans2[nowRcnt];
-	ans[3] = ans3[nowRcnt];
+
 }
 
 class makeLabelNoFill {
@@ -175,9 +175,9 @@ class makeLabel {
 function dispProblem(){
 
 	//●●●問題枠(色なし)
-	lblprb1 = new makeLabelNoFill(prb1[nowRcnt], 50*s, W1+w*24, h*10,  clr_problem)
-	lblprb2 = new makeLabelNoFill(prb2[nowRcnt], 50*s, W1+w*32, h*10,  clr_problem)
-	lblprb3 = new makeLabelNoFill(prb3[nowRcnt], 50*s, W1+w*40, h*10,  clr_problem)
+	lblprb1 = new makeLabelNoFill(prb1[nowRcnt], 50*s, W1+w*32, h*10,  clr_problem)
+	lblprb2 = new makeLabelNoFill(prb2[nowRcnt], 50*s, W1+w*40, h*10,  clr_problem)
+	lblprb3 = new makeLabelNoFill(prb3[nowRcnt], 50*s, W1+w*32, h*20,  clr_problem)
 	lblprb4 = new makeLabelNoFill(prb4[nowRcnt], 50*s, W1+w*40, h*20,  clr_problem)
 	lblprb1.disp(); lblprb2.disp(); lblprb3.disp(); lblprb4.disp();
 
@@ -186,7 +186,7 @@ function dispProblem(){
 	line(W1+w* 6, h*24, W1+w*50, h*24)
 	noStroke();
 	textAlign(CENTER); textSize(50*s); fill(clr_problem);
-	text("×", W1+w*16, h*23);
+	text("-", W1+w*24, h*23);
 }
 
 function dispMyAnswer(){
@@ -199,14 +199,15 @@ function dispMyAnswer(){
 	//●●●解答枠：自分の解答表示(緑)
 	lblMyAns1 = new makeLabel(myAns[1], 40*s, W1+w*40, h*30, w*6, h*10, clr_makeLabelMyAns,  clr_makeLabelMyAnsText);
 	lblMyAns2 = new makeLabel(myAns[2], 40*s, W1+w*32, h*30, w*6, h*10, clr_makeLabelMyAns,  clr_makeLabelMyAnsText);
-	lblMyAns3 = new makeLabel(myAns[3], 40*s, W1+w*24, h*30, w*6, h*10, clr_makeLabelMyAns,  clr_makeLabelMyAnsText);
-	lblMyAns1.disp(); lblMyAns2.disp(); lblMyAns3.disp();
+//	lblMyAns3 = new makeLabel(myAns[3], 40*s, W1+w*24, h*30, w*6, h*10, clr_makeLabelMyAns,  clr_makeLabelMyAnsText);
+	lblMyAns1.disp(); lblMyAns2.disp();
+	//lblMyAns3.disp();
 
 	//●●●解答枠：今から解答する枠(赤)
 	rectMode(CENTER); fill(clr_NowAnsBox)
 	if(mystatus == 1){ rect(W1+w*40, h*30, w*6, h*10); }
 	if(mystatus == 2){ rect(W1+w*32, h*30, w*6, h*10); }
-	if(mystatus == 3){ rect(W1+w*24, h*30, w*6, h*10); }
+//	if(mystatus == 3){ rect(W1+w*24, h*30, w*6, h*10); }
 }
 
 function dispOxMessage(){
@@ -216,8 +217,9 @@ function dispOxMessage(){
 	//	if(mystatus >= 1){							//解答するごとに「ox」表示
 		lblOX1 = new makeLabelNoFill(ox[1], 90*s, W1+w*40, h*(30+8),  clr_makeLabelNoFillLblOX);
 		lblOX2 = new makeLabelNoFill(ox[2], 90*s, W1+w*32, h*(30+8),  clr_makeLabelNoFillLblOX);
-		lblOX3 = new makeLabelNoFill(ox[3], 90*s, W1+w*24, h*(30+8),  clr_makeLabelNoFillLblOX);
-		lblOX1.disp(); lblOX2.disp(); lblOX3.disp();
+	//	lblOX3 = new makeLabelNoFill(ox[3], 90*s, W1+w*24, h*(30+8),  clr_makeLabelNoFillLblOX);
+		lblOX1.disp(); lblOX2.disp();
+		//lblOX3.disp();
 	}
 
 	//解答入力が終了したら
@@ -226,8 +228,9 @@ function dispOxMessage(){
 		flgALLresult = TRUE;
 		lblAns1 = new makeLabelNoFill(ans[1], 30*s, W1+w*40, h*(30+9),  clr_makeLabelNoFillLblAns);
 		lblAns2 = new makeLabelNoFill(ans[2], 30*s, W1+w*32, h*(30+9),  clr_makeLabelNoFillLblAns);
-		lblAns3 = new makeLabelNoFill(ans[3], 30*s, W1+w*24, h*(30+9),  clr_makeLabelNoFillLblAns);
-		lblAns1.disp(); lblAns2.disp(); lblAns3.disp();
+	//	lblAns3 = new makeLabelNoFill(ans[3], 30*s, W1+w*24, h*(30+9),  clr_makeLabelNoFillLblAns);
+		lblAns1.disp(); lblAns2.disp();
+		//lblAns3.disp();
 
 		for(let i=1; i<=num_MyAns; i++){
 			if(ox[i] == "x"){
