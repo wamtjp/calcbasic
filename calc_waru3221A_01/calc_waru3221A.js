@@ -9,6 +9,7 @@
 NOWversion="1.00"
 
 b_disp = ["7","8","9","4","5","6","1","2","3","-","0","+","."]
+//         0   1   2   3   4   5   6   7   8   9   10  11  12
 // b_real = ["7","8","9","4","5","6","1","2","3","-","0",".","+"]
 
 NEXTnum=20; DELETE1num=21; 
@@ -23,20 +24,23 @@ posX = 0; posY = 0;
 
 //////////begin-問題変更【1】
 
-num_MyAns = 10;
-MAXcontinuePoint = 5;
+num_MyAns = 9;
+MAXcontinuePoint = 2;
 
 DATANAME = 'calc_waru3221A.json'
 
-prb1=[]; prb2=[];prb3=[]; prb4=[];
-//prb5=[]; prb6=[];
+prb1=[]; prb2=[];prb3=[]; prb4=[]; prb5=[];
+// prb6=[];
 ans1 = []; ans2 = []; ans3 = []; ans4 = [];
-ans5 = []; ans6 = []; ans7 = []; ans8 = []; ans9 = []; ans10 = [];
+ans5 = []; ans6 = []; ans7 = []; ans8 = []; ans9 = [];
+// ans10 = [];
 
-myAns[0] = ""; myAns[1] = ""; myAns[2] = ""; myAns[3] = ""; myAns[4] = "";
-myAns[5] = ""; myAns[6] = ""; myAns[7] = ""; myAns[8] = ""; myAns[9] = ""; myAns[10] = "";
-ox[0] = ""; ox[1] = ""; ox[2] = ""; ox[3] = ""; ox[4] = "";
-ox[5] = ""; ox[6] = ""; ox[7] = ""; ox[8] = ""; ox[9] = ""; ox[10] = "";
+myAns[1] = ""; myAns[2] = ""; myAns[3] = ""; myAns[4] = "";
+myAns[5] = ""; myAns[6] = ""; myAns[7] = ""; myAns[8] = ""; myAns[9] = "";
+// myAns[10] = "";
+ox[1] = ""; ox[2] = ""; ox[3] = ""; ox[4] = "";
+ox[5] = ""; ox[6] = ""; ox[7] = ""; ox[8] = ""; ox[9] = "";
+// ox[10] = "";
 
 //////////end-問題変更【1】
 
@@ -121,43 +125,44 @@ function setup(){
 //--------------------begin-レイアウト指定
 
 //問題画面:レイアウト指定
-	pos_lblprb1 = [W1+w*32, H1+h*10];
-	pos_lblprb2 = [W1+w*40, H1+h*10];
-	pos_lblprb3 = [W1+w*32, H1+h*20];
-	pos_lblprb4 = [W1+w*40, H1+h*20];
+	pos_lblprb1 = [W1+w*32, H1+h*24];
+	pos_lblprb2 = [W1+w*40, H1+h*24];
+	pos_lblprb3 = [W1+w*48, H1+h*24];
+	pos_lblprb4 = [W1+w*12, H1+h*24];
+	pos_lblprb5 = [W1+w*20, H1+h*24];////
 
-	pos_lblMyAns1 = [W1+w*40, H1+h*30, w*6, h*10];
-	pos_lblMyAns2 = [W1+w*32, H1+h*30, w*6, h*10];
-	pos_lblMyAns3 = [W1+w*24, H1+h*30, w*6, h*10];
-	pos_lblMyAns4 = [W1+w*32, H1+h*42, w*6, h*10];
-	pos_lblMyAns5 = [W1+w*24, H1+h*42, w*6, h*10];
-	pos_lblMyAns6 = [W1+w*16, H1+h*42, w*6, h*10];
-	pos_lblMyAns7 = [W1+w*40, H1+h*54, w*6, h*10];
-	pos_lblMyAns8 = [W1+w*32, H1+h*54, w*6, h*10];
-	pos_lblMyAns9 = [W1+w*24, H1+h*54, w*6, h*10];
-	pos_lblMyAns10 = [W1+w*16, H1+h*54, w*6, h*10];
+	pos_lblMyAns1 = [W1+w*40, H1+h*12, w*6, h*10];
+	pos_lblMyAns2 = [W1+w*40, H1+h*36, w*6, h*10];
+	pos_lblMyAns3 = [W1+w*32, H1+h*36, w*6, h*10];
+	pos_lblMyAns4 = [W1+w*40, H1+h*48, w*6, h*10];
+	pos_lblMyAns5 = [W1+w*48, H1+h*48, w*6, h*10];
+	pos_lblMyAns6 = [W1+w*48, H1+h*12, w*6, h*10];
+	pos_lblMyAns7 = [W1+w*48, H1+h*60, w*6, h*10];
+	pos_lblMyAns8 = [W1+w*40, H1+h*60, w*6, h*10];
+	pos_lblMyAns9 = [W1+w*48, H1+h*72, w*6, h*10];
+	//pos_lblMyAns10 = [W1+w*16, H1+h*54, w*6, h*10];
 
-	pos_lblOX1 = [W1+w*40, H1+h*(30+4)];
-	pos_lblOX2 = [W1+w*32, H1+h*(30+4)];
-	pos_lblOX3 = [W1+w*24, H1+h*(30+4)];
-	pos_lblOX4 = [W1+w*32, H1+h*(42+4)];
-	pos_lblOX5 = [W1+w*24, H1+h*(42+4)];
-	pos_lblOX6 = [W1+w*16, H1+h*(42+4)];
-	pos_lblOX7 = [W1+w*40, H1+h*(54+4)];
-	pos_lblOX8 = [W1+w*32, H1+h*(54+4)];
-	pos_lblOX9 = [W1+w*24, H1+h*(54+4)];
-	pos_lblOX10 = [W1+w*16, H1+h*(54+4)];
+	pos_lblOX1 = [W1+w*40, H1+h*(12+4)];
+	pos_lblOX2 = [W1+w*40, H1+h*(36+4)];
+	pos_lblOX3 = [W1+w*32, H1+h*(36+4)];
+	pos_lblOX4 = [W1+w*40, H1+h*(48+4)];
+	pos_lblOX5 = [W1+w*48, H1+h*(48+4)];
+	pos_lblOX6 = [W1+w*48, H1+h*(12+4)];
+	pos_lblOX7 = [W1+w*48, H1+h*(60+4)];
+	pos_lblOX8 = [W1+w*40, H1+h*(60+4)];
+	pos_lblOX9 = [W1+w*48, H1+h*(72+4)];
+	//pos_lblOX10 = [W1+w*16, H1+h*(54+4)];
 
-	pos_lblAns1 = [W1+w*40, H1+h*(30+5)];
-	pos_lblAns2 = [W1+w*32, H1+h*(30+5)];
-	pos_lblAns3 = [W1+w*24, H1+h*(30+5)];
-	pos_lblAns4 = [W1+w*32, H1+h*(42+5)];
-	pos_lblAns5 = [W1+w*24, H1+h*(42+5)];
-	pos_lblAns6 = [W1+w*16, H1+h*(42+5)];
-	pos_lblAns7 = [W1+w*40, H1+h*(54+5)];
-	pos_lblAns8 = [W1+w*32, H1+h*(54+5)];
-	pos_lblAns9 = [W1+w*24, H1+h*(54+5)];
-	pos_lblAns10 = [W1+w*16, H1+h*(54+5)];
+	pos_lblAns1 = [W1+w*40, H1+h*(12+5)];
+	pos_lblAns2 = [W1+w*40, H1+h*(36+5)];
+	pos_lblAns3 = [W1+w*32, H1+h*(36+5)];
+	pos_lblAns4 = [W1+w*40, H1+h*(48+5)];
+	pos_lblAns5 = [W1+w*48, H1+h*(48+5)];
+	pos_lblAns6 = [W1+w*48, H1+h*(12+5)];
+	pos_lblAns7 = [W1+w*48, H1+h*(60+5)];
+	pos_lblAns8 = [W1+w*40, H1+h*(60+5)];
+	pos_lblAns9 = [W1+w*48, H1+h*(72+5)];
+	//pos_lblAns10 = [W1+w*16, H1+h*(54+5)];
 	
 //操作画面:レイアウト指定
 
@@ -235,16 +240,18 @@ function makeProblem(){
 		prb2[i] = array_jsonData[i][1]	//A2
 		prb3[i] = array_jsonData[i][2]	//B1
 		prb4[i] = array_jsonData[i][3]	//B2
-		ans1[i] = array_jsonData[i][4]	//ans1
-		ans2[i] = array_jsonData[i][5]	//ans2
-		ans3[i] = array_jsonData[i][6]	//ans3
-		ans4[i] = array_jsonData[i][7]	//ans4
-		ans5[i] = array_jsonData[i][8]	//ans5
-		ans6[i] = array_jsonData[i][9]	//ans6
-		ans7[i] = array_jsonData[i][10]	//ans7
-		ans8[i] = array_jsonData[i][11]	//ans8
-		ans9[i] = array_jsonData[i][12]	//ans9
-		ans10[i] = array_jsonData[i][13]	//ans10
+		prb5[i] = array_jsonData[i][4]	//B2	////
+
+		ans1[i] = array_jsonData[i][5]	//ans1
+		ans2[i] = array_jsonData[i][6]	//ans2
+		ans3[i] = array_jsonData[i][7]	//ans3
+		ans4[i] = array_jsonData[i][8]	//ans4
+		ans5[i] = array_jsonData[i][9]	//ans5
+		ans6[i] = array_jsonData[i][10]	//ans6
+		ans7[i] = array_jsonData[i][11]	//ans7
+		ans8[i] = array_jsonData[i][12]	//ans8
+		ans9[i] = array_jsonData[i][13]	//ans9
+		//ans10[i] = array_jsonData[i][13]	//ans10
 
 		//console.log(i+"->>"+prb1[i]+":"+prb2[i]+"+"+prb3[i]+":"+prb4[i]
 		//	+" = "+ans2[i]+":"+ans1[i]);
@@ -272,7 +279,7 @@ function choiceProblem(){
 	ans[7] = ans7[nowRcnt];
 	ans[8] = ans8[nowRcnt];
 	ans[9] = ans9[nowRcnt];
-	ans[10] = ans10[nowRcnt];
+	//ans[10] = ans10[nowRcnt];
 
 //////////end-問題変更【3】
 
@@ -321,19 +328,21 @@ function dispProblem(){
 	//●●●問題枠(色なし)
 
 //////////begin-問題変更【4】
-	lblprb1 = new makeLabelNoFill(prb1[nowRcnt], 50*fontRateSize, ...pos_lblprb1,  clr_problem)
-	lblprb2 = new makeLabelNoFill(prb2[nowRcnt], 50*fontRateSize, ...pos_lblprb2,  clr_problem)
-	lblprb3 = new makeLabelNoFill(prb3[nowRcnt], 50*fontRateSize, ...pos_lblprb3,  clr_problem)
-	lblprb4 = new makeLabelNoFill(prb4[nowRcnt], 50*fontRateSize, ...pos_lblprb4,  clr_problem)
-	lblprb1.disp(); lblprb2.disp(); lblprb3.disp(); lblprb4.disp();
+	lblprb1 = new makeLabelNoFill(prb1[nowRcnt], 60*fontRateSize, ...pos_lblprb1,  clr_problem)
+	lblprb2 = new makeLabelNoFill(prb2[nowRcnt], 60*fontRateSize, ...pos_lblprb2,  clr_problem)
+	lblprb3 = new makeLabelNoFill(prb3[nowRcnt], 60*fontRateSize, ...pos_lblprb3,  clr_problem)
+	lblprb4 = new makeLabelNoFill(prb4[nowRcnt], 60*fontRateSize, ...pos_lblprb4,  clr_problem)
+	lblprb5 = new makeLabelNoFill(prb5[nowRcnt], 60*fontRateSize, ...pos_lblprb5,  clr_problem)////
+	lblprb1.disp(); lblprb2.disp(); lblprb3.disp(); lblprb4.disp();  lblprb5.disp();
 
 	//●●●問題に関する記号・図形など
 	stroke(clr_problem); strokeWeight(5);
-	line(W1+w* 12, H1+h*24, W1+w*50, H1+h*24)
-	line(W1+w* 12, H1+h*48, W1+w*50, H1+h*48)
+	line(W1+w*32-36, H1+h*24-24, W1+w*60-20, H1+h*24-24)
+	line(W1+w*32-20, H1+h*48-32, W1+w*60-20, H1+h*48-32)
+	line(W1+w*40, H1+h*72-32, W1+w*60-24, H1+h*72-32)
 	noStroke();
 	textAlign(CENTER); textSize(50*fontRateSize); fill(clr_problem);
-	text("×", W1+w*24, H1+h*23);
+	text(")", W1+w*32-36, H1+h*24+12);
 //////////end-問題変更【4】
 
 }
@@ -356,9 +365,10 @@ function dispMyAnswer(){
 	lblMyAns7 = new makeLabel(myAns[7], 40*fontRateSize, ...pos_lblMyAns7, clr_makeLabelMyAns,  clr_makeLabelMyAnsText);
 	lblMyAns8 = new makeLabel(myAns[8], 40*fontRateSize, ...pos_lblMyAns8, clr_makeLabelMyAns,  clr_makeLabelMyAnsText);
 	lblMyAns9 = new makeLabel(myAns[9], 40*fontRateSize, ...pos_lblMyAns9, clr_makeLabelMyAns,  clr_makeLabelMyAnsText);
-	lblMyAns10 = new makeLabel(myAns[10], 40*fontRateSize, ...pos_lblMyAns10, clr_makeLabelMyAns,  clr_makeLabelMyAnsText);
-	lblMyAns1.disp(); lblMyAns2.disp(); lblMyAns3.disp(); lblMyAns4.disp();
-	lblMyAns5.disp(); lblMyAns6.disp(); lblMyAns7.disp(); lblMyAns8.disp(); lblMyAns9.disp(); lblMyAns10.disp();
+	//lblMyAns10 = new makeLabel(myAns[10], 40*fontRateSize, ...pos_lblMyAns10, clr_makeLabelMyAns,  clr_makeLabelMyAnsText);
+	lblMyAns1.disp(); lblMyAns2.disp(); lblMyAns3.disp(); lblMyAns4.disp();lblMyAns5.disp(); 
+	lblMyAns6.disp(); lblMyAns7.disp(); lblMyAns8.disp(); lblMyAns9.disp();
+	// lblMyAns10.disp();
 
 	//●●●解答枠：今から解答する枠(赤)
 	rectMode(CENTER); fill(clr_NowAnsBox)
@@ -371,7 +381,7 @@ function dispMyAnswer(){
 	if(mystatus == 7){ rect(...pos_lblMyAns7); }
 	if(mystatus == 8){ rect(...pos_lblMyAns8); }
 	if(mystatus == 9){ rect(...pos_lblMyAns9); }
-	if(mystatus == 10){ rect(...pos_lblMyAns10); }
+	//if(mystatus == 10){ rect(...pos_lblMyAns10); }
 //////////end-問題変更【5】
 
 }
@@ -392,10 +402,11 @@ function dispOxMessage(){
 		lblOX7 = new makeLabelNoFill(ox[7], 90*fontRateSize, ...pos_lblOX7,  clr_makeLabelNoFillLblOX);
 		lblOX8 = new makeLabelNoFill(ox[8], 90*fontRateSize, ...pos_lblOX8,  clr_makeLabelNoFillLblOX);
 		lblOX9 = new makeLabelNoFill(ox[9], 90*fontRateSize, ...pos_lblOX9,  clr_makeLabelNoFillLblOX);
-		lblOX10 = new makeLabelNoFill(ox[10], 90*fontRateSize, ...pos_lblOX10,  clr_makeLabelNoFillLblOX);
+		//lblOX10 = new makeLabelNoFill(ox[10], 90*fontRateSize, ...pos_lblOX10,  clr_makeLabelNoFillLblOX);
 
-		lblOX1.disp(); lblOX2.disp(); lblOX3.disp(); lblOX4.disp();
-		lblOX5.disp(); lblOX6.disp(); lblOX7.disp(); lblOX8.disp(); lblOX9.disp(); lblOX10.disp();
+		lblOX1.disp(); lblOX2.disp(); lblOX3.disp(); lblOX4.disp(); lblOX5.disp(); 
+		lblOX6.disp(); lblOX7.disp(); lblOX8.disp(); lblOX9.disp();
+		// lblOX10.disp();
 	}
 
 	//解答入力が終了したら
@@ -411,9 +422,10 @@ function dispOxMessage(){
 		lblAns7 = new makeLabelNoFill(ans[7], 30*fontRateSize, ...pos_lblAns7,  clr_makeLabelNoFillLblAns);
 		lblAns8 = new makeLabelNoFill(ans[8], 30*fontRateSize, ...pos_lblAns8,  clr_makeLabelNoFillLblAns);
 		lblAns9 = new makeLabelNoFill(ans[9], 30*fontRateSize, ...pos_lblAns9,  clr_makeLabelNoFillLblAns);
-		lblAns10 = new makeLabelNoFill(ans[10], 30*fontRateSize, ...pos_lblAns10,  clr_makeLabelNoFillLblAns);
-		lblAns1.disp(); lblAns2.disp(); lblAns3.disp(); lblAns4.disp();
-		lblAns5.disp(); lblAns6.disp(); lblAns7.disp(); lblAns8.disp(); lblAns9.disp(); lblAns10.disp();
+		//lblAns10 = new makeLabelNoFill(ans[10], 30*fontRateSize, ...pos_lblAns10,  clr_makeLabelNoFillLblAns);
+		lblAns1.disp(); lblAns2.disp(); lblAns3.disp(); lblAns4.disp(); lblAns5.disp(); 
+		lblAns6.disp(); lblAns7.disp(); lblAns8.disp(); lblAns9.disp();
+		// lblAns10.disp();
 
 //////////end-問題変更【6】
 
@@ -574,7 +586,8 @@ function dealEachButton(){
 			}
 		}
 		//★★「数字・符号」
-		if(0<=btnNumNOW && btnNumNOW<=12){
+		if(0<=btnNumNOW && btnNumNOW<=8 && point1 != MAXcontinuePoint){	//当面 1-9のみ、0は入力できない
+		//if(0<=btnNumNOW && btnNumNOW<=12){
 			//★ox[mystatus] = judge_ox(mystatus)
 			if(mystatus <= num_MyAns){
 				if(btnNumNOW<=8){
