@@ -25,7 +25,7 @@ posX = 0; posY = 0;
 //////////begin-問題変更【1】
 
 num_MyAns = 9;
-MAXcontinuePoint = 2;
+MAXcontinuePoint = 5;
 
 DATANAME = 'calc_waru3221A.json'
 
