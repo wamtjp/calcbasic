@@ -11,8 +11,10 @@ num_MyAns = 3;
 MAXcontinuePoint = 10;
 b_disp = ["7","8","9","4","5","6","1","2","3","-","0","+","."]
 // b_real = ["7","8","9","4","5","6","1","2","3","-","0",".","+"]
-NEXTnum=20; DELETE1num=21; 
+NEXTnum=20; DELETE1num=21;
 btnNumNOW=999
+// ボタンオブジェクト格納用
+let buttons = [];
 
 //一応、確認が必要な準備
 
@@ -76,11 +78,12 @@ function setup(){
 	W1 = -w*4; H1 = 0;
 	W2=0; H2=u*(40+15);
 	setLabelButtonMarginY = 0;
-	createCanvas(window.innerWidth, window.innerHeight);
+        createCanvas(window.innerWidth, window.innerHeight);
 
-	rectMode(CENTER); textAlign(CENTER);FLG="";
+        rectMode(CENTER); textAlign(CENTER);FLG="";
 
-	makeProblem()//★
+        createButtons();
+        makeProblem()//★
 }
 
 function draw() {
@@ -170,6 +173,49 @@ class makeLabel {
 		fill(this.tR, this.tG, this.tB);
 		text(this.tstr, this.x, YT);
 	}
+}
+
+// ボタン表示と判定をまとめたクラス
+class CalcButton {
+    constructor(label, value, x, y, w, h, colBg, colFg, shape, tsize) {
+        this.label = label;
+        this.value = value;
+        this.x = x;
+        this.y = y;
+        this.w = w;
+        this.h = h;
+        this.colBg = colBg;
+        this.colFg = colFg;
+        this.shape = shape; // 'ellipse' or 'rect'
+        this.tsize = tsize;
+    }
+
+    draw() {
+        rectMode(CENTER);
+        textAlign(CENTER, CENTER);
+        fill(this.colBg);
+        if (this.shape === 'rect') {
+            rect(this.x, this.y, this.w, this.h);
+        } else {
+            ellipse(this.x, this.y, this.w, this.h);
+        }
+        fill(this.colFg);
+        textSize(this.tsize);
+        text(this.label, this.x, this.y);
+    }
+
+    hit(px, py) {
+        if (this.shape === 'rect') {
+            return (
+                px >= this.x - this.w / 2 &&
+                px <= this.x + this.w / 2 &&
+                py >= this.y - this.h / 2 &&
+                py <= this.y + this.h / 2
+            );
+        } else {
+            return dist(px, py, this.x, this.y) <= this.w / 2;
+        }
+    }
 }
 
 function dispProblem(){
@@ -283,59 +329,36 @@ function dispScore(){
 	}
 }
 
+// ボタンを生成して配列に格納
+function createButtons(){
+        buttons = [];
+        for(let n=0; n<=12; n++){
+                let i=n%3; let j=int(n/3);
+                let posX=W1+w*12+i*w*12;
+                let posY=H2+h*6+j*h*12;
+                let bg=color(0,0,255); let fg=color(0,255,0);
+                if(n==9||n==11){bg=color(255,128,197); fg=color(0,0,255);}
+                if(n==12){bg=color(10,190,7); fg=color(0,0,255);}
+                buttons.push(new CalcButton(b_disp[n], n, posX, posY, r1*8, r1*8, bg, fg, 'ellipse', 30*s));
+        }
+        buttons.push(new CalcButton('NEXT', NEXTnum, W1+w*50, H2+h*18, w*14, h*32, color(0,255,255), color(0,0,255), 'rect', 40*s));
+        buttons.push(new CalcButton('DEL', DELETE1num, W1+w*50, H2+h*42, w*14, h*8, color(255,0,0), color(255,255,255), 'rect', 40*s));
+}
+
 function dispButton(){
-	//解答ボタン表示
-	textAlign(CENTER)
-	for(let n=0; n<=12; n++){
-		i=n%3; j=int(n/3);
-		posX=w*12+i*w*12; posY=h*6+j*h*12
-		fill(0,0,255)
-		if(n==9||n==11){fill(255, 128, 197)} // 符号ボタンの色
-		if(n==12){fill(10, 190, 7)} // 小数点ボタンの色
-		ellipse(W1+posX,H2+posY,r1*8,r1*8)
-		fill(0, 255, 0); textSize(30*s);
-		if(n==9||n==11){fill(0, 0, 255)} // 符号ボタンのテキスト色
-		if(n==12){fill(0, 0, 255)} // 小数点ボタンのテキスト色
-		text(b_disp[n], W1+posX, H2+posY +h*1)
-	}
-
-	//「次」表示
-	rectMode(CENTER); textAlign(CENTER)
-	fill(0,255,255)
-	rect(W1+w*50, H2+h*18,w*14,h*32)
-	fill(0, 0, 255); textSize(40*s);
-	text("NEXT",W1+w*50, H2+h*18+6)
-
-	//★★「取り消し」表示
-	rectMode(CENTER); textAlign(CENTER)
-	fill(255,0,0)
-	rect(W1+w*50, H2+h*42,w*14,h*8)
-	fill(255, 255, 255); textSize(40*s);
-	text("DEL",W1+w*50, H2+h*(42+3))
+        // ボタン配列を描画
+        for (let btn of buttons) {
+                btn.draw();
+        }
 }
 
 function buttonNumNOW(){
-	let btnNum=999;
-	let tchX=mouseX; let tchY=mouseY;
-	let tX=tchX-w*6-W1; let tY=tchY-H2-setLabelButtonMarginY;
-	//「数字・符号」
-	if((0+W1<=tX && tX+W1<=w*36) && (0<=tY && tY<=h*60)){
-		let ii = int(tX/(w*12));
-		let jj = int(tY/(h*12));
-		let nearN = jj*3+ii
-		if(0<=nearN && nearN<=12 && nearN!=10 && nearN!=11){
-			btnNum = nearN;
-		}
-	}
-	//「次」
-	if(W1+w*44<=tchX && W1+tchX<=w*56 && H2+h*2<=tchY && tchY<=H2+h*34){
-		btnNum = NEXTnum;
-	}
-	//「取り消し」
-	if(W1+w*44<=tchX && W1+tchX<=w*56 && H2+h*38<=tchY && tchY<=H2+h*46){
-		btnNum = DELETE1num;
-	}
-	return btnNum;
+        for (let btn of buttons) {
+                if (btn.hit(mouseX, mouseY)) {
+                        return btn.value;
+                }
+        }
+        return 999;
 }
 
 
