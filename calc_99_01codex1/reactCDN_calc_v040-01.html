@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>React CDN 筆算アプリ</title>
+
+    <!-- React CDN 読み込み -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- スタイル定義（CSS） -->
+    <style>
+      body {
+        background: black;
+        color: white;
+        font-family: sans-serif;
+        padding: 20px;
+      }
+      .problem-box {
+        font-size: 2.5em;
+        text-align: right;
+        line-height: 1.2em;
+        margin-bottom: 0.5em;
+      }
+      .underline {
+        border-bottom: 2px solid white;
+        padding-bottom: 0.2em;
+      }
+      .carry {
+        color: yellow;
+        text-align: right;
+        font-size: 1.2em;
+        height: 1.2em;
+      }
+      .answer-box {
+        color: cyan;
+        font-size: 2.5em;
+        text-align: right;
+        height: 1.5em;
+      }
+      .buttons {
+        display: flex;
+        flex-wrap: wrap;
+        max-width: 240px;
+        gap: 0.5em;
+        margin-top: 1em;
+      }
+      .btn {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5em;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+      }
+      .ox {
+        font-size: 1.5em;
+        margin-top: 1em;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+
+      // 元のp5.jsファイルから移植したProblemData（完全版）
+      const problemData = [
+        [9,2,1,1], [9,3,1,2], [9,4,1,3], [9,5,1,4], [9,6,1,5], [9,7,1,6],
+        [9,8,1,7], [9,9,1,8], [8,3,1,1], [8,4,1,2], [8,5,1,3], [8,6,1,4],
+        [8,7,1,5], [8,8,1,6], [8,9,1,7], [7,4,1,1], [7,5,1,2], [7,6,1,3],
+        [7,7,1,4], [7,8,1,5], [7,9,1,6], [6,5,1,1], [6,6,1,2], [6,7,1,3],
+        [6,8,1,4], [6,9,1,5], [5,6,1,1], [5,7,1,2], [5,8,1,3], [5,9,1,4],
+        [4,7,1,1], [4,8,1,2], [4,9,1,3], [3,8,1,1], [3,9,1,2], [2,9,1,1]
+      ];
+
+      function App() {
+        // 状態管理
+        const [problem, setProblem] = React.useState({ a: 9, b: 2 });
+        const [answer, setAnswer] = React.useState(["", ""]);  // 2桁の解答欄
+        const [status, setStatus] = React.useState(1);         // 現在の入力位置（1または2）
+        const [ox, setOx] = React.useState(["", "", ""]);      // 判定マーク用（〇×）
+        const [message, setMessage] = React.useState("かいとう");
+        const [point, setPoint] = React.useState(0);           // 連続正解数
+
+        // 正しい答えを `problemData` から検索
+        const ansCorrect = React.useMemo(() => {
+          const match = problemData.find(([a, b]) => a === problem.a && b === problem.b);
+          return [match[2].toString(), match[3].toString()];
+        }, [problem]);
+
+        // くり上がり判定（十の位が1なら表示）
+        const carry = React.useMemo(() => {
+          const sum = problem.a + problem.b;
+          return sum >= 10 ? "1" : " ";
+        }, [problem]);
+
+        // 数字入力処理
+        const handleInput = (digit) => {
+          if (status > 2) return;
+
+          const newAns = [...answer];
+          newAns[status - 1] = digit;
+          setAnswer(newAns);
+
+          const correct = ansCorrect[status - 1];
+          const newOx = [...ox];
+          newOx[status] = digit === correct ? "o" : "x";
+          setOx(newOx);
+
+          if (digit === correct) {
+            if (status === 2) {
+              setMessage("せいかい");
+              setPoint(point + 1);
+            }
+          } else {
+            setMessage("ざんねん");
+            setPoint(0);
+          }
+
+          setStatus(status + 1);
+        };
+
+        // 「つぎ」ボタン：問題リセット
+        const handleNext = () => {
+          const next = problemData[Math.floor(Math.random() * problemData.length)];
+          setProblem({ a: next[0], b: next[1] });
+          setAnswer(["", ""]);
+          setStatus(1);
+          setOx(["", "", ""]);
+          setMessage("かいとう");
+        };
+
+        // 「けす」ボタン：1桁前を消去
+        const handleDelete = () => {
+          if (status <= 1) return;
+          const newAns = [...answer];
+          const newOx = [...ox];
+          newAns[status - 2] = "";
+          newOx[status - 1] = "";
+          setAnswer(newAns);
+          setOx(newOx);
+          setStatus(status - 1);
+        };
+
+        return (
+          <div>
+            <h2>くり上がりの筆算トレーニング</h2>
+
+            {/* くり上がり（繰り上げの「1」） */}
+            <div className="carry">{carry}</div>
+
+            {/* 筆算本体 */}
+            <div className="problem-box">
+              <div>{problem.a.toString().padStart(2, " ")}</div>
+              <div className="underline">+{problem.b.toString().padStart(1, " ")}</div>
+              <div className="answer-box">{answer[0]}{answer[1]}</div>
+            </div>
+
+            {/* 正誤判定表示 */}
+            <div className="ox">
+              {ox[1]} {ox[2]}<br />
+              {message} ／ れんぞく正解：{point}
+            </div>
+
+            {/* 数字ボタン */}
+            <div className="buttons">
+              {["1","2","3","4","5","6","7","8","9","0"].map((d) => (
+                <button key={d} className="btn" onClick={() => handleInput(d)}>{d}</button>
+              ))}
+            </div>
+
+            {/* 「つぎ」「けす」ボタン */}
+            <div style={{ marginTop: "1em" }}>
+              <button className="btn" style={{ background: "cyan" }} onClick={handleNext}>つぎ</button>
+              <button className="btn" style={{ background: "red", color: "white" }} onClick={handleDelete}>けす</button>
+            </div>
+          </div>
+        );
+      }
+
+      // Reactアプリを起動
+      ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+    </script>
+  </body>
+</html>
