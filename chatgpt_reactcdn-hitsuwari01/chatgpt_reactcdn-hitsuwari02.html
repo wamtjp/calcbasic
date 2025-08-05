@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>筆算：答え判定付き</title>
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+  <style>
+    body {
+      background-color: #f0f8ff;
+      font-family: sans-serif;
+    }
+
+    #root {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      gap: 20px;
+    }
+
+    .main-area {
+      display: flex;
+      gap: 40px;
+    }
+
+    .left-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      height: 40px;
+    }
+
+    .cell {
+      width: 32px;
+      height: 32px;
+      font-size: 24px;
+      text-align: center;
+      line-height: 32px;
+      border: 1px solid #ccc;
+      background-color: #fff;
+      border-radius: 4px;
+      margin-right: 2px;
+    }
+
+    .answer-cell {
+      background-color: #e0f7fa;
+      font-weight: bold;
+    }
+
+    .invisible {
+      border: none;
+      background-color: transparent;
+    }
+
+    .bracket-left {
+      border-left: 3px solid #333;
+      border-top: 3px solid #333;
+    }
+
+    .bracket-top {
+      border-top: 3px solid #333;
+    }
+
+    .full-line {
+      border-top: 2px solid #000;
+      width: 68px;
+      height: 0;
+      margin-left: 36px;
+    }
+
+    .right-panel {
+      display: grid;
+      grid-template-columns: repeat(3, 60px);
+      gap: 10px;
+    }
+
+    .num-button {
+      width: 60px;
+      height: 60px;
+      font-size: 24px;
+      background-color: #87ceeb;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    .num-button:active {
+      background-color: #4682b4;
+    }
+
+    .result-message {
+      font-size: 20px;
+      font-weight: bold;
+      color: #006400;
+    }
+
+    .result-error {
+      color: #b22222;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const App = () => {
+      const totalInputs = 10;
+      const [inputs, setInputs] = React.useState(Array(totalInputs).fill(""));
+      const [result, setResult] = React.useState(null); // 正誤メッセージ（null/true/false）
+
+      const correctAnswer = ['2', '5', '6', '1', '7', '1', '5', '2', '', '']; // 10個中8個使用（後半2つ未使用）
+
+      const handleInput = (digit) => {
+        setInputs((prev) => {
+          const next = [...prev];
+          const index = next.findIndex(v => v === "");
+          if (index !== -1) next[index] = digit;
+          return next;
+        });
+      };
+
+      // 全入力が埋まったときに自動判定
+      React.useEffect(() => {
+        if (inputs.every(v => v !== "")) {
+          const isCorrect = inputs.every((v, idx) => v === correctAnswer[idx]);
+          setResult(isCorrect);
+        } else {
+          setResult(null); // 入力途中なら判定リセット
+        }
+      }, [inputs]);
+
+      let i = 0;
+
+      return (
+        <>
+          <div className="main-area">
+            {/* 左：筆算 */}
+            <div className="left-panel">
+              <div className="row">
+                <div className="cell invisible" />
+                <div className="cell answer-cell">{inputs[i++]}</div>
+                <div className="cell answer-cell">{inputs[i++]}</div>
+              </div>
+              <div className="row"><div className="full-line" /></div>
+              <div className="row">
+                <div className="cell">3</div>
+                <div className="cell bracket-left bracket-top">7</div>
+                <div className="cell bracket-top">7</div>
+              </div>
+              <div className="row">
+                <div className="cell invisible" />
+                <div className="cell answer-cell">{inputs[i++]}</div>
+              </div>
+              <div className="row"><div className="full-line" /></div>
+              <div className="row">
+                <div className="cell invisible" />
+                <div className="cell answer-cell">{inputs[i++]}</div>
+                <div className="cell answer-cell">{inputs[i++]}</div>
+              </div>
+              <div className="row">
+                <div className="cell invisible" />
+                <div className="cell answer-cell">{inputs[i++]}</div>
+                <div className="cell answer-cell">{inputs[i++]}</div>
+              </div>
+              <div className="row"><div className="full-line" /></div>
+              <div className="row">
+                <div className="cell invisible" />
+                <div className="cell invisible" />
+                <div className="cell answer-cell">{inputs[i++]}</div>
+              </div>
+            </div>
+
+            {/* 右：数字ボタン */}
+            <div className="right-panel">
+              {[1,2,3,4,5,6,7,8,9,0].map(n => (
+                <button key={n} className="num-button" onClick={() => handleInput(n.toString())}>
+                  {n}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 結果メッセージ */}
+          {result !== null && (
+            <div className={`result-message ${result ? "" : "result-error"}`}>
+              {result ? "正解！" : "間違いです"}
+            </div>
+          )}
+        </>
+      );
+    };
+
+    ReactDOM.render(<App />, document.getElementById("root"));
+  </script>
+</body>
+</html>
