@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>筆算：線さらに左へ & 15を2桁に</title>
+
+  <!-- React / ReactDOM CDN（バージョン18） -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+  <!-- スタイル定義（CSS） -->
+  <style>
+    body {
+      background-color: #f0f8ff;
+      font-family: sans-serif;
+    }
+
+    /* 画面全体を中央に配置 */
+    #root {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 20px;
+      gap: 40px; /* 左の筆算部分と右のボタンとの間隔 */
+    }
+
+    /* 筆算の左側パネル */
+    .left-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    /* 筆算の各行（1段） */
+    .row {
+      display: flex;
+      align-items: center;
+      height: 40px;
+    }
+
+    /* 基本セルスタイル（幅・高さ・中央揃え・角丸） */
+    .cell {
+      width: 32px;
+      height: 32px;
+      font-size: 24px;
+      text-align: center;
+      line-height: 32px;
+      border: 1px solid #ccc;
+      background-color: #fff;
+      border-radius: 4px;
+      margin-right: 2px;
+    }
+
+    /* 入力するセルの色指定 */
+    .answer-cell {
+      background-color: #e0f7fa;
+      font-weight: bold;
+    }
+
+    /* 非表示セル（空間だけ確保） */
+    .invisible {
+      border: none;
+      background-color: transparent;
+    }
+
+    /* 罫線（割られる数77の囲み線） */
+    .bracket-left {
+      border-left: 3px solid #333;
+      border-top: 3px solid #333;
+    }
+
+    .bracket-top {
+      border-top: 3px solid #333;
+    }
+
+    /* 横線（引き算の下線） → margin-leftで位置調整 */
+    .full-line {
+      border-top: 2px solid #000;
+      width: 68px;
+      height: 0;
+      margin-left: 36px; /* ← 2枠左に行きすぎていたので、1枠分右へ戻した */
+    }
+
+    /* 右側の数字ボタンパネル */
+    .right-panel {
+      display: grid;
+      grid-template-columns: repeat(3, 60px); /* 3列 */
+      gap: 10px;
+    }
+
+    /* 数字ボタン */
+    .num-button {
+      width: 60px;
+      height: 60px;
+      font-size: 24px;
+      background-color: #87ceeb;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    .num-button:active {
+      background-color: #4682b4;
+    }
+  </style>
+</head>
+
+<body>
+    <div id="root"></div> <!-- React アプリのマウント先 -->
+  
+    <script type="text/babel">
+      const App = () => {
+        const totalInputs = 10; // 必要な入力マスの数（例：25, 6, 17, 15, 2）
+        const [inputs, setInputs] = React.useState(Array(totalInputs).fill(""));
+  
+        // 数字ボタンが押されたときの処理（左から順に空欄を埋める）
+        const handleInput = (digit) => {
+          setInputs((prev) => {
+            const next = [...prev];
+            const index = next.findIndex(v => v === ""); // 最初の空欄
+            if (index !== -1) next[index] = digit;
+            return next;
+          });
+        };
+  
+        let i = 0; // 入力欄用のインデックスカウンタ（商・途中計算などに順番に適用）
+  
+        return (
+          <div id="root">
+            {/* 左側：筆算レイアウト */}
+            <div className="left-panel">
+  
+              {/* 商（答え）→ □■■ */}
+              <div className="row">
+                <div className="cell invisible" />
+                <div className="cell answer-cell">{inputs[i++]}</div>
+                <div className="cell answer-cell">{inputs[i++]}</div>
+              </div>
+  
+              {/* 商の下線 → □ーー */}
+              <div className="row">
+                <div className="full-line" />
+              </div>
+  
+              {/* 問題の提示：3)77 */}
+              <div className="row">
+                <div className="cell">3</div>
+                <div className="cell bracket-left bracket-top">7</div>
+                <div className="cell bracket-top">7</div>
+              </div>
+  
+              {/* 引き算1段目（6） → □■ */}
+              <div className="row">
+                <div className="cell invisible" />
+                <div className="cell answer-cell">{inputs[i++]}</div>
+              </div>
+  
+              {/* 横線（17の直前） */}
+              <div className="row">
+                <div className="full-line" />
+              </div>
+  
+              {/* 引き算2段目（17） → □■■ */}
+              <div className="row">
+                <div className="cell invisible" />
+                <div className="cell answer-cell">{inputs[i++]}</div>
+                <div className="cell answer-cell">{inputs[i++]}</div>
+              </div>
+  
+              {/* 引き算3段目（15） → □■■（★この段を2桁に増やした） */}
+              <div className="row">
+                <div className="cell invisible" />
+                <div className="cell answer-cell">{inputs[i++]}</div>
+                <div className="cell answer-cell">{inputs[i++]}</div>
+              </div>
+  
+              {/* 横線（余りの前） */}
+              <div className="row">
+                <div className="full-line" />
+              </div>
+  
+              {/* 最後：余り（2） → □□■ */}
+              <div className="row">
+                <div className="cell invisible" />
+                <div className="cell invisible" />
+                <div className="cell answer-cell">{inputs[i++]}</div>
+              </div>
+            </div>
+  
+            {/* 右側：数字入力ボタン */}
+            <div className="right-panel">
+              {[1,2,3,4,5,6,7,8,9,0].map(n => (
+                <button
+                  key={n}
+                  className="num-button"
+                  onClick={() => handleInput(n.toString())}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      };
+  
+      // ReactDOMで描画
+      ReactDOM.render(<App />, document.getElementById("root"));
+    </script>
+  </body>
+  </html>
+  
