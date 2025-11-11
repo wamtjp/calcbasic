@@ -1,0 +1,148 @@
+body {
+  font-family: sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  font-size: 2.5rem;
+}
+
+#root {
+  width: 500px;
+  text-align: center;
+  position: relative;
+}
+
+.problem {
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 60px;
+}
+
+.final-answer-input {
+  font-size: 2.5rem;
+  width: 80px;
+  text-align: center;
+  border: 2px solid #ccc;
+  border-radius: 5px;
+  margin-left: 10px;
+}
+.final-answer-input:disabled {
+  background-color: #f0f0f0;
+  border-color: #ddd;
+}
+.final-answer-input:focus {
+  outline: 2px solid #007bff;
+  border-color: #007bff;
+}
+
+.hint-container {
+  height: 40px;
+  display: flex;
+  /* justify-content を flex-end に変更して、中身を右に寄せる */
+  justify-content: flex-end; 
+  align-items: center;
+  /* 右端からの余白を調整して、解答欄の真下あたりに来るようにする */
+  padding-right: 130px; 
+}
+
+.hint-text {
+  font-size: 1.5rem;
+  color: #28a745;
+}
+
+.target-number {
+  display: inline-block;
+  position: relative;
+  padding: 0 5px;
+}
+
+.sakuranbo-container {
+  position: relative;
+  height: 120px;
+  margin-top: -20px;
+}
+
+.sakuranbo-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* 【ここから変更】 */
+.sakuranbo-inputs {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  /* transform の値を -50% より小さくして、箱全体を左にずらす */
+  transform: translateX(-68%); 
+  display: flex;
+  /* gap は前回調整した値のまま */
+  gap: 40px; 
+}
+/* 【ここまで変更】 */
+
+.sakuranbo-inputs input {
+  width: 60px;
+  height: 60px;
+  font-size: 2rem;
+  text-align: center;
+  border: 2px solid #ccc;
+  border-radius: 5px;
+}
+
+.sakuranbo-inputs input:disabled {
+  background-color: #f0f0f0;
+}
+
+.sakuranbo-inputs input::placeholder {
+  color: #ddd;
+  opacity: 1;
+}
+
+.sakuranbo-inputs input:focus {
+  outline: 2px solid #007bff;
+}
+
+.highlight-step3 {
+  color: #007bff;
+  font-weight: bold;
+}
+.highlight-step4 {
+  color: #28a745;
+  font-weight: bold;
+}
+
+.feedback {
+  margin-top: 30px;
+  height: 80px;
+}
+
+.next-button {
+  display: block;
+  margin: 20px auto;
+  padding: 10px 20px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  border: none;
+  background-color: #007bff;
+  color: white;
+  border-radius: 5px;
+}
+.next-button:hover {
+  background-color: #0056b3;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}
