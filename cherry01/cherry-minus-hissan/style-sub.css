@@ -1,0 +1,107 @@
+/* --- 全体の設定 --- */
+body {
+  font-family: 'Arial', sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  font-size: 4rem; /* 全体の基本文字サイズ */
+  background-color: #f8f0f4; /* 背景色 */
+}
+
+#root {
+  width: 800px; /* アプリ全体の幅 */
+  text-align: center;
+}
+
+/* --- 全体を制御するグリッドコンテナ --- */
+.calculation-container {
+  display: grid;
+  /* ★レイアウトの列定義。各列の幅を指定。['筆算 十の位']['筆算 一の位']['枝用の空間']['入力欄'] */
+  grid-template-columns: 80px 80px 80px 80px;
+  /* ★レイアウトの行定義。各行の高さを指定。 */
+  grid-template-rows: repeat(5, 90px);
+  align-items: center; /* アイテムを垂直方向の中央に配置 */
+  justify-content: center; /* グリッド全体をページの中央に配置 */
+  /* ★行と列の間隔を調整したい場合は、ここの値を変更 */
+  gap: 10px 15px; /* 行間10px, 列間15px */
+  position: relative; /* 枝(SVG)を配置する際の基準点 */
+  margin-top: 50px; /* 全体を少し下にずらして見やすくする */
+}
+
+/* --- グリッド内の各アイテムの位置を指定 --- */
+/* 筆算エリアの各パーツ */
+.num1-ten   { grid-column: 1; grid-row: 2; } /* 「13」の「1」は、1列目・2行目に配置 */
+.num1-one   { grid-column: 2; grid-row: 2; } /* 「13」の「3」は、2列目・2行目に配置 */
+.operator   { grid-column: 1; grid-row: 3; justify-self: end; padding-right: 10px;} /* 「-」は、1列目・3行目に配置 */
+.num2-one   { grid-column: 2; grid-row: 3; } /* 「6」は、2列目・3行目に配置 */
+.hissan-line{ grid-column: 1 / span 2; grid-row: 4; align-self: start; margin-top: -10px;} /* 横線は、1列目から2列分を使い、4行目に配置 */
+.answer-one { grid-column: 2; grid-row: 5; } /* 最終的な答えは、2列目・5行目に配置 */
+
+/* 入力エリアの各パーツ */
+.sakuranbo1   { grid-column: 4; grid-row: 1; } /* さくらんぼ1(10)は、4列目・1行目に配置 */
+.sakuranbo2   { grid-column: 4; grid-row: 2; } /* さくらんぼ2(3)は、4列目・2行目に配置 */
+.intermediate { grid-column: 4; grid-row: 3; } /* 中間計算(4)は、4列目・3行目に配置 */
+
+
+/* --- グリッドアイテムの共通スタイル --- */
+.grid-item {
+  width: 80px;
+  height: 80px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.hissan-line {
+  border-top: 3px solid black;
+  width: 100%;
+}
+
+/* --- 枝(SVG)のスタイル --- */
+.line-svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    z-index: -1; /* 枝を入力欄の背後に描画するための設定 */
+}
+
+/* --- 入力欄の共通スタイル --- */
+input {
+  width: 80px;
+  height: 80px;
+  font-size: 4rem;
+  text-align: center;
+  border: 2px solid #ccc;
+  border-radius: 10px;
+  background-color: #fff;
+  margin: 0;
+  padding: 0;
+}
+input:disabled { background-color: #f0f0f0; }
+input:focus {
+  outline: 3px solid #dc3545; /* 選択されたときの赤い枠線 */
+  border-color: #dc3545;
+}
+
+/* --- 正解！の表示エリア --- */
+.feedback { margin-top: 30px; height: 100px; font-size: 2.5rem; }
+.next-button {
+  display: block;
+  margin: 20px auto;
+  padding: 15px 30px;
+  font-size: 2rem;
+  cursor: pointer;
+  border: none;
+  background-color: #dc3545; /* ボタンの色（赤） */
+  color: white;
+  border-radius: 10px;
+}
+
+/* --- その他 --- */
+/* 入力欄の横の上下矢印を消す設定 */
+input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input[type=number] { -moz-appearance: textfield; }

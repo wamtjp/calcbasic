@@ -1,0 +1,117 @@
+/* --- 全体の設定 --- */
+body {
+  font-family: sans-serif;
+  display: flex;
+  justify-content: center; /* 水平方向中央揃え */
+  align-items: center;   /* 垂直方向中央揃え */
+  min-height: 100vh;
+  font-size: 2.5rem; /* 全体の基本文字サイズ */
+}
+
+#root {
+  width: 500px; /* アプリ全体の幅 */
+  text-align: center;
+  position: relative;
+}
+
+/* --- 問題の式 (8 + 5 = ?) --- */
+.problem {
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 60px;
+}
+
+/* --- 最終的な答えの入力欄 --- */
+.final-answer-input {
+  font-size: 2.5rem; /* 文字サイズ */
+  width: 80px;       /* 幅 */
+  text-align: center;
+  border: 2px solid #ccc;
+  border-radius: 5px;
+  margin-left: 10px; /* 「=」との間の余白 */
+}
+.final-answer-input:focus {
+  outline: 2px solid #007bff; /* 選択されたときの青い枠線 */
+}
+
+/* --- ヒント (10 + 3 = ?) の表示エリア --- */
+.hint-container {
+  height: 40px;
+  display: flex;
+  justify-content: flex-end; /* 右寄せにする */
+  align-items: center;
+  /* ★ヒントの位置を左右に動かしたい場合は、この値を変更 */
+  padding-right: 130px;
+}
+.hint-text {
+  font-size: 1.5rem;
+  color: #28a745; /* ヒントの文字色（緑） */
+}
+
+/* --- さくらんぼ計算のエリア --- */
+.sakuranbo-container {
+  position: relative;
+  height: 120px;
+  margin-top: -20px;
+}
+.sakuranbo-svg { /* 枝を描画するエリア */
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* --- さくらんぼの入力欄 (2つの箱) --- */
+.sakuranbo-inputs {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  /* ★さくらんぼ入力欄の左右の位置を調整したい場合は、このtranslateXの値を変更 */
+  transform: translateX(-68%);
+  display: flex;
+  /* ★さくらんぼ入力欄の間の距離を調整したい場合は、この値を変更 */
+  gap: 40px;
+}
+.sakuranbo-inputs input {
+  width: 60px;  /* 箱の幅 */
+  height: 60px; /* 箱の高さ */
+  font-size: 2rem;
+  text-align: center;
+  border: 2px solid #ccc;
+  border-radius: 5px;
+}
+.sakuranbo-inputs input:focus {
+  outline: 2px solid #007bff; /* 選択されたときの青い枠線 */
+}
+
+/* --- 正解！の表示エリア --- */
+.feedback {
+  margin-top: 30px;
+  height: 80px;
+}
+.next-button { /* 次の問題へボタン */
+  display: block;
+  margin: 20px auto;
+  padding: 10px 20px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  border: none;
+  background-color: #007bff; /* ボタンの色（青） */
+  color: white;
+  border-radius: 5px;
+}
+
+/* --- その他 --- */
+/* 入力欄の横の上下矢印を消す設定 */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}

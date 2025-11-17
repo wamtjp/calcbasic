@@ -1,19 +1,20 @@
-/* ... (body, #root は変更なし) ... */
+/* --- 全体の設定 --- */
 body {
   font-family: sans-serif;
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  font-size: 2.5rem;
+  font-size: 2.5rem; /* 全体の基本文字サイズ */
 }
 
 #root {
-  width: 500px;
+  width: 500px; /* アプリ全体の幅 */
   text-align: center;
   position: relative;
 }
 
+/* --- 問題の式 (13 - 5 = ?) --- */
 .problem {
   margin-bottom: 10px;
   display: flex;
@@ -21,64 +22,47 @@ body {
   align-items: center;
   height: 60px;
 }
-
-/* 【ここから追加】 問題の式の間隔を調整するスタイル */
+/* ★問題の数字と記号の間隔を調整したい場合は、ここのmarginの値を変更 */
 .problem-operator {
-  /* margin: 0 40px 0 20px; 上下0, 左右に余白を設定 */
-  margin: 0 40px 0 100px; /* 上下0, 左右に余白を設定 */
+  margin: 0 40px 0 100px;
 }
-
 .problem-equal {
   margin-right: 10px;
 }
-/* 【ここまで追加】 */
 
-
+/* --- 最終的な答えの入力欄 --- */
 .final-answer-input {
   font-size: 2.5rem;
   width: 80px;
   text-align: center;
   border: 2px solid #ccc;
   border-radius: 5px;
-  /* margin-left は .problem-equal で設定したので不要に */
-}
-.final-answer-input:disabled {
-  background-color: #f0f0f0;
-  border-color: #ddd;
 }
 .final-answer-input:focus {
   outline: 2px solid #007bff;
-  border-color: #007bff;
 }
 
-/* ... (hint-container, target-number, sakuranbo-container, sakuranbo-svg, sakuranbo-inputs, sakuranbo-inputs input は変更なし) ... */
+/* --- ヒント (5 + 3 = ?) の表示エリア --- */
 .hint-container {
   height: 40px;
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  /* padding-right: 130px; */
+  /* ★ヒントの位置を左右に動かしたい場合は、この値を変更 */
   padding-right: 60px;
 }
-
 .hint-text {
   font-size: 1.5rem;
-  color: #28a745;
+  color: #28a745; /* ヒントの文字色（緑） */
 }
 
-.target-number {
-  display: inline-block;
-  position: relative;
-  padding: 0 5px;
-}
-
+/* --- さくらんぼ計算のエリア --- */
 .sakuranbo-container {
   position: relative;
   height: 120px;
   margin-top: -20px;
 }
-
-.sakuranbo-svg {
+.sakuranbo-svg { /* 枝を描画するエリア */
   position: absolute;
   top: 0;
   left: 0;
@@ -87,15 +71,17 @@ body {
   overflow: visible;
 }
 
+/* --- さくらんぼの入力欄 (2つの箱) --- */
 .sakuranbo-inputs {
   position: absolute;
   bottom: 0;
   left: 50%;
+  /* ★さくらんぼ入力欄の左右の位置を調整したい場合は、このtranslateXの値を変更 */
   transform: translateX(-130%);
   display: flex;
+  /* ★さくらんぼ入力欄の間の距離を調整したい場合は、この値を変更 */
   gap: 40px;
 }
-
 .sakuranbo-inputs input {
   width: 60px;
   height: 60px;
@@ -104,35 +90,22 @@ body {
   border: 2px solid #ccc;
   border-radius: 5px;
 }
-
-.sakuranbo-inputs input:disabled {
-  background-color: #f0f0f0;
-}
-
-.sakuranbo-inputs input::placeholder {
-  color: #ddd;
-  opacity: 1;
-}
-
 .sakuranbo-inputs input:focus {
   outline: 2px solid #007bff;
 }
 
-
-/* 【ここから変更】 */
+/* --- 中間計算 (10-5) の答えを入れる箱のエリア --- */
 .intermediate-step {
   position: relative;
   height: 60px;
-  margin-top: 10px; 
+  margin-top: 10px;
 }
-
 .intermediate-input {
   position: absolute;
   top: 0;
   left: 50%;
-  /* ご指定の transform 値を設定 transform: translate(calc(-50% + 55px), -35px);*/
+  /* ★中間計算の入力箱の位置を調整したい場合は、このtransformの値を変更 */
   transform: translate(calc(-50% ), -150px);
-  
   font-size: 2rem;
   width: 60px;
   height: 60px;
@@ -140,32 +113,16 @@ body {
   border: 2px solid #ccc;
   border-radius: 5px;
 }
-/* 【ここまで変更】 */
-
-.intermediate-input:disabled {
-  background-color: #f0f0f0;
-}
-
 .intermediate-input:focus {
   outline: 2px solid #007bff;
 }
 
-/* ... (highlight-step3, highlight-step4, feedback, next-button, input::-webkit-outer-spin-button は変更なし) ... */
-.highlight-step3 {
-  color: #007bff; /* 青色 */
-  font-weight: bold;
-}
-.highlight-step4 {
-  color: #28a745; /* 緑色 */
-  font-weight: bold;
-}
-
+/* --- 正解！の表示エリア --- */
 .feedback {
   margin-top: 10px;
   height: 80px;
 }
-
-.next-button {
+.next-button { /* 次の問題へボタン */
   display: block;
   margin: 20px auto;
   padding: 10px 20px;
@@ -176,10 +133,9 @@ body {
   color: white;
   border-radius: 5px;
 }
-.next-button:hover {
-  background-color: #0056b3;
-}
 
+/* --- その他 --- */
+/* 入力欄の横の上下矢印を消す設定 */
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
   -webkit-appearance: none;
