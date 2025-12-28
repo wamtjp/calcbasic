@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>多機能けいさんドリル</title>
+    
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        /* スタイルはシンプルに維持 */
+        body { font-family: sans-serif; background-color: #f0f8ff; margin: 0; display: flex; justify-content: center; height: 100vh; overflow: hidden; }
+        #root { width: 100%; max-width: 600px; display: flex; flex-direction: column; }
+        .container { padding: 20px; text-align: center; }
+        .problem-card { background: white; margin: 10px; padding: 30px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        
+        /* 1行計算のスタイル */
+        .simple-expr { font-size: 3.5rem; font-weight: bold; }
+        .answer-input { font-size: 3rem; width: 150px; text-align: center; border-bottom: 3px solid #007bff; color: #007bff; min-height: 1.2em; }
+
+        .keypad { height: 40%; background-color: #e9ecef; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 10px; }
+        button { border: none; border-radius: 8px; font-size: 1.8rem; font-weight: bold; cursor: pointer; background-color: white; }
+        button:active { background-color: #ddd; }
+        .btn-enter { background-color: #007bff; color: white; }
+
+        /* 筆算のレイアウト */
+        .column-calc {
+            font-family: 'Courier New', monospace; /* 数字の幅を揃える */
+            font-size: 3.5rem;
+            line-height: 1.2;
+            display: inline-block;
+            text-align: right;
+            padding: 10px 20px;
+            position: relative;
+        }
+        .column-op {
+            position: absolute;
+            left: -40px;
+            bottom: 0;
+        }
+        .column-line {
+            border-top: 4px solid #333;
+            margin-top: 5px;
+            margin-bottom: 10px;
+            width: 120%;
+            margin-left: -10%;
+        }
+        .column-answer {
+            color: #007bff;
+            min-height: 1.2em;
+        }
+        .mult-calc {
+            font-family: 'Courier New', monospace;
+            font-size: 2.5rem; /* 段数が増えるので少し小さめに */
+            text-align: right;
+            display: inline-block;
+}
+        .mult-row-input {
+            border-bottom: 2px solid #ccc;
+            color: #007bff;
+            min-width: 150px;
+            display: inline-block;
+            margin: 2px 0;
+        }
+        .mult-row-input.active {
+            border-bottom: 3px solid #007bff;
+            background-color: #f0f7ff;
+        }
+    </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+    // --- Firebase設定（ご自身のものを貼ってください） ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyAVl2fGrOh6t6NZrBNQsQ-8LRwiSyO4bZg",
+        authDomain: "gemini3-mathdrill-01.firebaseapp.com",
+        projectId: "gemini3-mathdrill-01",
+        storageBucket: "gemini3-mathdrill-01.firebasestorage.app",
+        messagingSenderId: "134407870270",
+        appId: "1:134407870270:web:f0c52a785b79e368d4fe6f",
+        databaseURL: "https://gemini3-mathdrill-01-default-rtdb.firebaseio.com/"
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // ==========================================
+    // 1. 各表示パーツ
+    // ==========================================
+
+    // 【simple】1行計算
+    const SimpleProblem = ({ values, userAnswers }) => {
+        const [v1, op, v2] = values;
+        const displayOp = (o) => o === '*' ? '×' : (o === '/' ? '÷' : o);
+        return (
+            <div className="simple-expr">
+                {v1} {displayOp(op)} {v2} = <span className="answer-input">{userAnswers[0]}</span>
+            </div>
+        );
+    };
+
+    // 【col_add】筆算たし算・ひき算
+    const ColumnAddProblem = ({ values, userAnswers }) => {
+        const [v1, op, v2] = values;
+        return (
+            <div className="column-calc">
+                <div>{v1}</div>
+                <div style={{ position: 'relative' }}>
+                    <span className="column-op">{op}</span>
+                    {v2}
+                </div>
+                <div className="column-line"></div>
+                <div className="column-answer">{userAnswers[0]}</div>
+            </div>
+        );
+    };
+
+    // 【mult_col】筆算かけ算（複数入力）
+    const MultiColumnProblem = ({ values, userAnswers, activeIndex, setActiveIndex }) => {
+        const [v1, v2] = values;
+        return (
+            <div className="mult-calc">
+                <div>{v1}</div>
+                <div style={{ position: 'relative' }}>
+                    <span style={{ position: 'absolute', left: '-30px' }}>×</span>
+                    {v2}
+                </div>
+                <div className="column-line"></div>
+                {userAnswers.map((ans, idx) => (
+                    <div key={idx}>
+                        <div 
+                            className={`mult-row-input ${activeIndex === idx ? 'active' : ''}`}
+                            onClick={() => setActiveIndex(idx)}
+                        >
+                            {ans || ' '}
+                        </div>
+                        {idx === userAnswers.length - 2 && <div className="column-line"></div>}
+                    </div>
+                ))}
+            </div>
+        );
+    };
+
+    // 【div_rem】わり算（商と余り）
+    const DivisionProblem = ({ values, userAnswers, activeIndex, setActiveIndex }) => {
+        const [v1, v2] = values;
+        return (
+            <div style={{fontSize:'3rem', fontWeight:'bold'}}>
+                {v1} ÷ {v2} = 
+                <span 
+                    className={`answer-input ${activeIndex === 0 ? 'active' : ''}`}
+                    onClick={() => setActiveIndex(0)}
+                    style={{display:'inline-block', width:'80px', borderBottom:'3px solid #007bff'}}
+                >
+                    {userAnswers[0] || ' '}
+                </span>
+                <span style={{fontSize:'1.5rem', margin:'0 10px'}}>あまり</span>
+                <span 
+                    className={`answer-input ${activeIndex === 1 ? 'active' : ''}`}
+                    onClick={() => setActiveIndex(1)}
+                    style={{display:'inline-block', width:'80px', borderBottom:'3px solid #007bff'}}
+                >
+                    {userAnswers[1] || ' '}
+                </span>
+            </div>
+        );
+    };
+
+    // ==========================================
+    // 2. メインコンポーネント
+    // ==========================================
+    const App = () => {
+        const [problems, setProblems] = useState([]);
+        const [currentIndex, setCurrentIndex] = useState(0);
+        const [userAnswers, setUserAnswers] = useState([""]); // 配列で管理
+        const [activeBoxIndex, setActiveBoxIndex] = useState(0);
+        const [feedback, setFeedback] = useState(null);
+
+        useEffect(() => {
+            fetch('./problems.csv')
+                .then(res => res.text())
+                .then(text => {
+                    const lines = text.trim().split('\n');
+                    const list = lines.map(line => {
+                        const [type, probValStr, ansValStr] = line.split(',');
+                        return {
+                            type: type.trim(),
+                            probValues: probValStr.trim().split(';'),
+                            ansValues: ansValStr.trim().split(';')
+                        };
+                    });
+                    setProblems(list);
+                });
+        }, []);
+
+        const currentProb = problems[currentIndex];
+
+        // 問題が変わったら入力欄をリセット
+        useEffect(() => {
+            if (currentProb) {
+                setUserAnswers(new Array(currentProb.ansValues.length).fill(""));
+                setActiveBoxIndex(0);
+                setFeedback(null);
+            }
+        }, [currentIndex, problems]);
+
+        const handleInput = (char) => {
+            if (feedback === 'correct') return;
+            const newAnsws = [...userAnswers];
+            if (char === 'D') {
+                newAnsws[activeBoxIndex] = newAnsws[activeBoxIndex].slice(0, -1);
+            } else {
+                newAnsws[activeBoxIndex] += char;
+            }
+            setUserAnswers(newAnsws);
+        };
+
+        const handleCheck = () => {
+            const isAllCorrect = userAnswers.every((ans, idx) => ans === currentProb.ansValues[idx]);
+            setFeedback(isAllCorrect ? 'correct' : 'wrong');
+        };
+
+        if (!currentProb) return <div className="container">読み込み中...</div>;
+
+        return (
+            <>
+                <div className="problem-card">
+                    {/* タイプ別の表示切り替え */}
+                    {currentProb.type === 'simple' && (
+                        <SimpleProblem values={currentProb.probValues} userAnswers={userAnswers} />
+                    )}
+                    {currentProb.type === 'col_add' && (
+                        <ColumnAddProblem values={currentProb.probValues} userAnswers={userAnswers} />
+                    )}
+                    {currentProb.type === 'mult_col' && (
+                        <MultiColumnProblem 
+                            values={currentProb.probValues} 
+                            userAnswers={userAnswers}
+                            activeIndex={activeBoxIndex}
+                            setActiveIndex={setActiveBoxIndex}
+                        />
+                    )}
+                    {currentProb.type === 'div_rem' && (
+                        <DivisionProblem 
+                            values={currentProb.probValues} 
+                            userAnswers={userAnswers}
+                            activeIndex={activeBoxIndex}
+                            setActiveIndex={setActiveBoxIndex}
+                        />
+                    )}
+                    
+                    <div style={{marginTop:20, minHeight:'40px'}}>
+                        {feedback === 'correct' && <span style={{color:'green', fontSize:'1.5rem', fontWeight:'bold'}}>正解！</span>}
+                        {feedback === 'wrong' && <span style={{color:'red', fontSize:'1.5rem', fontWeight:'bold'}}>違うよ</span>}
+                    </div>
+
+                    {feedback === 'correct' && (
+                        <button className="btn-enter" onClick={() => setCurrentIndex(prev => prev + 1)} style={{marginTop:10, padding:'10px 30px'}}>
+                            次へ
+                        </button>
+                    )}
+                </div>
+
+                <div className="keypad">
+                    {[7,8,9,4,5,6,1,2,3].map(n => <button key={n} onClick={() => handleInput(n.toString())}>{n}</button>)}
+                    <button style={{backgroundColor:'#ffc107'}} onClick={() => handleInput('D')}>消</button>
+                    <button onClick={() => handleInput('0')}>0</button>
+                    <button className="btn-enter" onClick={handleCheck}>判定</button>
+                </div>
+            </>
+        );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+</script>
+</body>
+</html>

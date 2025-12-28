@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>日本式 筆算わり算ドリル（完全整列版）</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 1文字ずつの幅を3.5rem(約56px)に固定 */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(5, 3.5rem);
+            grid-auto-rows: 3.5rem;
+            gap: 0;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+        }
+        .cell { display: flex; align-items: center; justify-content: center; font-size: 2rem; position: relative; }
+        
+        /* 日本式の線 */
+        .line-top { border-top: 3px solid black; }
+        .curve-left { 
+            border-left: 3px solid black; 
+            border-top-left-radius: 25px 50px;
+            margin-left: 15px;
+        }
+        /* 引き算の横線（特定のセルにまたがって表示） */
+        .sub-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            border-top: 3px solid black;
+            z-index: 10;
+        }
+
+        /* 入力ボックス */
+        .input-box {
+            width: 3rem;
+            height: 3rem;
+            text-align: center;
+            border: 3px solid #3b82f6;
+            border-radius: 8px;
+            background-color: #eff6ff;
+            font-size: 1.8rem;
+            outline: none;
+        }
+        .input-box:focus { background-color: #ffffff; }
+    </style>
+</head>
+<body class="bg-gray-100 p-4">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        function DivisionDrill() {
+            // ステップごとの正解と位置(row:行, col:列)
+            // col 1:割る数, col 2:百の位, col 3:十の位, col 4:一の位
+            const steps = [
+                { id: 'q1', ans: '3', r: 1, c: 3, label: '19の中に5は何回ある？（商）' },
+                { id: 'p1a', ans: '1', r: 3, c: 2, label: '5 × 3 = 15 を書こう' },
+                { id: 'p1b', ans: '5', r: 3, c: 3, label: '5 × 3 = 15 を書こう' },
+                { id: 'r1', ans: '4', r: 4, c: 3, label: '19 - 15 = 4（ひき算）' },
+                { id: 'd1', ans: '7', r: 4, c: 4, label: 'となりの 7 をおろそう' },
+                { id: 'q2', ans: '9', r: 1, c: 4, label: '47の中に5は何回ある？（商）' },
+                { id: 'p2a', ans: '4', r: 5, c: 3, label: '5 × 9 = 45 を書こう' },
+                { id: 'p2b', ans: '5', r: 5, c: 4, label: '5 × 9 = 45 を書こう' },
+                { id: 'rem', ans: '2', r: 6, c: 4, label: '47 - 45 = 2（あまり）' }
+            ];
+
+            const [currentIdx, setCurrentIdx] = useState(0);
+            const [vals, setVals] = useState({});
+            const inputRef = useRef(null);
+
+            useEffect(() => { if (inputRef.current) inputRef.current.focus(); }, [currentIdx]);
+
+            const handleInput = (e) => {
+                const char = e.target.value.slice(-1);
+                if (char === steps[currentIdx].ans) {
+                    setVals({ ...vals, [steps[currentIdx].id]: char });
+                    if (currentIdx < steps.length - 1) setCurrentIdx(currentIdx + 1);
+                    else alert("完璧です！正解！");
+                }
+            };
+
+            // 特定の位置に数字または入力ボックスを表示する関数
+            const renderAt = (r, c, content = null, id = null) => {
+                const isTarget = currentIdx < steps.length && steps[currentIdx].r === r && steps[currentIdx].c === c;
+                const filledValue = Object.keys(vals).find(key => {
+                    const s = steps.find(st => st.id === key);
+                    return s.r === r && s.c === c;
+                });
+
+                return (
+                    <div className="cell" style={{ gridRow: r, gridColumn: c }}>
+                        {isTarget ? (
+                            <input ref={inputRef} className="input-box" onChange={handleInput} value="" />
+                        ) : filledValue ? (
+                            <span className="text-blue-700">{vals[filledValue]}</span>
+                        ) : content}
+                    </div>
+                );
+            };
+
+            return (
+                <div className="max-w-xl mx-auto bg-white p-10 rounded-2xl shadow-xl mt-6">
+                    <h2 className="text-center text-2xl font-bold mb-8 text-gray-800">わり算の ひっ算 (197 ÷ 5)</h2>
+                    
+                    <div className="grid-container mx-auto">
+                        {/* 1段目: 商 (q1, q2) */}
+                        {renderAt(1, 3)}
+                        {renderAt(1, 4)}
+
+                        {/* 2段目: 5 ) 1 9 7 */}
+                        <div className="cell text-3xl" style={{ gridRow: 2, gridColumn: 1 }}>5</div>
+                        <div className="cell line-top curve-left" style={{ gridRow: 2, gridColumn: 2 }}>1</div>
+                        <div className="cell line-top" style={{ gridRow: 2, gridColumn: 3 }}>9</div>
+                        <div className="cell line-top" style={{ gridRow: 2, gridColumn: 4 }}>7</div>
+
+                        {/* 3段目: 1 5 */}
+                        {renderAt(3, 2)}
+                        {renderAt(3, 3)}
+
+                        {/* 4段目: ひき算の線1 + あまり4とおろした7 */}
+                        <div className="sub-line" style={{ gridRow: 4, gridColumn: '2 / 5' }}></div>
+                        {renderAt(4, 3)}
+                        {renderAt(4, 4)}
+
+                        {/* 5段目: 4 5 */}
+                        {renderAt(5, 3)}
+                        {renderAt(5, 4)}
+
+                        {/* 6段目: ひき算の線2 + あまり2 */}
+                        <div className="sub-line" style={{ gridRow: 6, gridColumn: '3 / 5' }}></div>
+                        {renderAt(6, 4)}
+                    </div>
+
+                    <div className="mt-10 bg-yellow-50 p-6 rounded-xl border-2 border-yellow-200 text-center">
+                        <p className="text-xl text-yellow-900 font-bold">
+                            {currentIdx < steps.length ? steps[currentIdx].label : "おめでとう！"}
+                        </p>
+                    </div>
+
+                    <button onClick={() => {setVals({}); setCurrentIdx(0);}} className="mt-6 w-full text-gray-400 hover:text-gray-600 underline text-sm">
+                        最初からやりなおす
+                    </button>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<DivisionDrill />);
+    </script>
+</body>
+</html>

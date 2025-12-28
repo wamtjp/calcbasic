@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>けいさんドリル (Firebase)</title>
+    
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        body {
+            font-family: "Hiragino Kaku Gothic ProN", sans-serif;
+            margin: 0; padding: 0;
+            background-color: #f0f8ff;
+            display: flex; justify-content: center;
+            height: 100vh; overflow: hidden;
+        }
+        #root { width: 100%; max-width: 600px; height: 100%; display: flex; flex-direction: column; }
+        
+        /* 共通デザイン */
+        .container {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 20px; text-align: center;
+        }
+        h1 { font-size: 2rem; color: #333; margin-bottom: 30px; }
+        input[type="text"] {
+            font-size: 1.5rem; padding: 10px; width: 80%;
+            margin-bottom: 20px; border-radius: 8px; border: 2px solid #ccc;
+        }
+        .btn-start {
+            font-size: 1.5rem; padding: 15px 40px;
+            background-color: #007bff; color: white;
+            border: none; border-radius: 30px; cursor: pointer;
+            box-shadow: 0 4px 0 #0056b3;
+        }
+        .btn-start:active { transform: translateY(4px); box-shadow: none; }
+
+        /* ドリル画面 */
+        .problem-area {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            background: white; margin: 10px; border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .expression { font-size: 4rem; font-weight: bold; margin-bottom: 20px; }
+        .user-input {
+            font-size: 4rem; color: #007bff; min-height: 1.2em;
+            border-bottom: 3px solid #ccc; padding: 0 10px; min-width: 100px;
+        }
+        .message-area { height: 60px; display: flex; justify-content: center; align-items: center; font-size: 2rem; font-weight: bold; }
+        .msg-correct { color: #28a745; }
+        .msg-wrong { color: #dc3545; }
+        
+        /* テンキー */
+        .keypad {
+            height: 45%; background-color: #e9ecef; padding: 10px;
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+            padding-bottom: 30px;
+        }
+        button {
+            border: none; border-radius: 10px; font-size: 2rem; font-weight: bold;
+            cursor: pointer; background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            touch-action: manipulation;
+        }
+        button:active { transform: scale(0.95); background-color: #ddd; }
+        .btn-delete { background-color: #ffc107; color: #333; font-size: 1.5rem; }
+        .btn-enter { background-color: #007bff; color: white; font-size: 1.5rem; }
+        .btn-next { 
+            margin-top: 20px; background-color: #28a745; color: white; 
+            padding: 10px 40px; font-size: 1.5rem; border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="root"></div>
+
+<script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // =================================================================
+    // ★ ここに「準備1」でコピーしたコードを上書きして貼り付けてください ★
+    // =================================================================
+    const firebaseConfig = {
+
+        apiKey: "AIzaSyAVl2fGrOh6t6NZrBNQsQ-8LRwiSyO4bZg",
+        authDomain: "gemini3-mathdrill-01.firebaseapp.com",
+        projectId: "gemini3-mathdrill-01",
+        storageBucket: "gemini3-mathdrill-01.firebasestorage.app",
+        messagingSenderId: "134407870270",
+        appId: "1:134407870270:web:f0c52a785b79e368d4fe6f",
+        databaseURL: "https://gemini3-mathdrill-01-default-rtdb.firebaseio.com/"
+    };
+    // =================================================================
+
+    // Firebase初期化（重複防止）
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.database();
+
+    const App = () => {
+        const [phase, setPhase] = useState('login'); // login, drill, finish
+        const [studentInfo, setStudentInfo] = useState({ number: '', name: '' });
+        
+        const [problems, setProblems] = useState([]);
+        const [currentIndex, setCurrentIndex] = useState(0);
+        const [userAnswer, setUserAnswer] = useState("");
+        const [feedback, setFeedback] = useState(null);
+        const [score, setScore] = useState(0); // 正解数カウント
+
+        // CSV読み込み
+        useEffect(() => {
+            fetch('./problems.csv')
+                .then(res => res.ok ? res.text() : Promise.reject("CSV読込失敗"))
+                .then(text => {
+                    const lines = text.trim().split('\n');
+                    const list = [];
+                    lines.forEach(line => {
+                        const parts = line.split(',');
+                        if (parts.length >= 3) {
+                            list.push({ n1: parts[0].trim(), op: parts[1].trim(), n2: parts[2].trim() });
+                        }
+                    });
+                    setProblems(list);
+                })
+                .catch(err => console.error(err));
+        }, []);
+
+        // --- ログイン画面の処理 ---
+        const handleLogin = () => {
+            if (!studentInfo.number || !studentInfo.name) {
+                alert("番号と名前を入力してください");
+                return;
+            }
+            setPhase('drill');
+        };
+
+        // --- ドリル画面の処理 ---
+        const handleNumClick = (num) => {
+            if (feedback === 'correct') return;
+            setUserAnswer(prev => prev + num);
+            setFeedback(null);
+        };
+
+        const handleDelete = () => {
+            if (feedback === 'correct') return;
+            setUserAnswer(prev => prev.slice(0, -1));
+            setFeedback(null);
+        };
+
+        const handleCheck = () => {
+            if (!problems[currentIndex] || !userAnswer) return;
+            const prob = problems[currentIndex];
+            
+            // 計算
+            let correct = 0;
+            if (prob.op === '+') correct = parseInt(prob.n1) + parseInt(prob.n2);
+            else if (prob.op === '-') correct = parseInt(prob.n1) - parseInt(prob.n2);
+
+            if (parseInt(userAnswer) === correct) {
+                setFeedback('correct');
+                setScore(prev => prev + 1); // 点数アップ
+            } else {
+                setFeedback('wrong');
+            }
+        };
+
+        const handleNext = () => {
+            if (currentIndex < problems.length - 1) {
+                setCurrentIndex(prev => prev + 1);
+                setUserAnswer("");
+                setFeedback(null);
+            } else {
+                // 全問終了 -> データ送信して終了画面へ
+                sendDataToFirebase();
+            }
+        };
+
+        // --- ★データ送信処理★ ---
+        const sendDataToFirebase = () => {
+            const dateStr = new Date().toLocaleString('ja-JP');
+            // IDは「番号_名前」にする（上書き防止なら日付も入れるが、今回はシンプルに）
+            const userId = `${studentInfo.number}_${studentInfo.name}`;
+            
+            // データを書き込む
+            db.ref('results/' + userId).set({
+                number: studentInfo.number,
+                name: studentInfo.name,
+                score: score + (feedback === 'correct' ? 1 : 0), // 最後の1問分を加算するか注意(今回はhandleNextで呼ばれる時点で加算済みのはずだが、Reactのstate反映ラグを考慮して単純にscoreを使う)
+                total: problems.length,
+                date: dateStr
+            }).then(() => {
+                setPhase('finish');
+            }).catch((error) => {
+                alert("送信エラー: " + error.message);
+            });
+        };
+        
+        // --- 画面描画 ---
+
+        // 1. 名前入力画面
+        if (phase === 'login') {
+            return (
+                <div className="container">
+                    <h1>けいさんドリル</h1>
+                    <input type="text" placeholder="出席番号 (例: 101)" 
+                        value={studentInfo.number}
+                        onChange={(e) => setStudentInfo({...studentInfo, number: e.target.value})} 
+                    />
+                    <input type="text" placeholder="名前 (例: 山田たろう)" 
+                        value={studentInfo.name}
+                        onChange={(e) => setStudentInfo({...studentInfo, name: e.target.value})} 
+                    />
+                    <br/>
+                    <button className="btn-start" onClick={handleLogin}>はじめる</button>
+                    <div style={{marginTop:20, fontSize:'0.8rem', color:'#666'}}>
+                        ※CSV読込完了: {problems.length}問
+                    </div>
+                </div>
+            );
+        }
+
+        // 3. 終了画面
+        if (phase === 'finish') {
+            return (
+                <div className="container">
+                    <h1 style={{color:'#28a745'}}>送信完了！</h1>
+                    <p style={{fontSize:'1.5rem'}}>おつかれさまでした。</p>
+                    <p style={{fontSize:'2rem', fontWeight:'bold'}}>
+                        {score} / {problems.length} てん
+                    </p>
+                    <button className="btn-start" onClick={() => window.location.reload()}>
+                        さいしょにもどる
+                    </button>
+                </div>
+            );
+        }
+
+        // 2. ドリル画面（これまでと同じ）
+        const currentProblem = problems[currentIndex];
+        const displayOp = (op) => op === '*' ? '×' : (op === '/' ? '÷' : op);
+
+        return (
+            <>
+                <div className="problem-area">
+                    <div className="expression">
+                        {currentProblem.n1} {displayOp(currentProblem.op)} {currentProblem.n2} = 
+                    </div>
+                    <div className="user-input">{userAnswer}</div>
+                    <div className="message-area">
+                        {feedback === 'correct' && <span className="msg-correct">せいかい！</span>}
+                        {feedback === 'wrong' && <span className="msg-wrong">まちがい</span>}
+                    </div>
+                    {feedback === 'correct' && (
+                        <button className="btn-next" onClick={handleNext}>
+                            {currentIndex < problems.length - 1 ? "つぎへ" : "おわり（そうしん）"}
+                        </button>
+                    )}
+                </div>
+                <div className="keypad">
+                    {[7,8,9,4,5,6,1,2,3].map(n => (
+                        <button key={n} onClick={() => handleNumClick(n.toString())}>{n}</button>
+                    ))}
+                    <button className="btn-delete" onClick={handleDelete}>けす</button>
+                    <button onClick={() => handleNumClick('0')}>0</button>
+                    <button className="btn-enter" onClick={handleCheck}>判定</button>
+                </div>
+            </>
+        );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+</script>
+
+</body>
+</html>

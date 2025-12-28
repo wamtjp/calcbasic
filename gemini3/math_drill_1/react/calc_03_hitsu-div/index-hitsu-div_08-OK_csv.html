@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>筆算わり算ドリル（完成形・自動フォーカス）</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@700&family=Sawarabi+Mincho&display=swap');
+        body { font-family: 'Noto Sans JP', sans-serif; background-color: #f1f5f9; }
+        .math-grid { display: grid; grid-template-columns: repeat(5, 4.5rem); grid-auto-rows: 4.5rem; width: max-content; margin: 0 auto; position: relative; }
+        .cell { display: flex; align-items: center; justify-content: center; font-size: 2.8rem; font-family: 'Sawarabi Mincho', serif; width: 4.5rem; height: 4.5rem; position: relative; }
+        .line-top { border-top: 4px solid #000; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+        .curve-left { border-left: 4px solid #000; border-top-left-radius: 40px 80px; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; padding-left: 0.8rem; }
+        .sub-line { position: absolute; bottom: 0; left: 0; width: 100%; border-bottom: 4px solid #000; pointer-events: none; z-index: 5; }
+        .input-box { width: 3.8rem; height: 3.8rem; text-align: center; border: 4px solid #3b82f6; border-radius: 8px; font-size: 2.5rem; outline: none; background-color: #eff6ff; z-index: 10; }
+        .correct { color: #2563eb; font-weight: bold; }
+    </style>
+</head>
+<body class="py-10">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        function App() {
+            const [problems, setProblems] = useState([]);
+            const [pIdx, setPIdx] = useState(0);
+            const [config, setConfig] = useState({ steps: [], lines: [] });
+            const [vals, setVals] = useState({});
+            const [stepIdx, setStepIdx] = useState(0);
+            const inputRef = useRef(null);
+
+            // 1. CSV読み込み
+            useEffect(() => {
+                fetch('problems.csv')
+                    .then(res => res.text())
+                    .then(text => parseCSV(text))
+                    .catch(() => parseCSV("197,5\n402,4\n608,2\n312,3\n102,5"));
+            }, []);
+
+            const parseCSV = (text) => {
+                const parsed = text.trim().split('\n').map(l => {
+                    const [dvd, dvs] = l.split(',').map(Number);
+                    return { dividend: dvd, divisor: dvs };
+                });
+                setProblems(parsed);
+            };
+
+            // 2. データ生成
+            const generateData = (dividend, divisor) => {
+                const steps = [];
+                const lines = [];
+                const d = dividend.toString().split('').map(Number);
+                let isTensStart = d[0] < divisor;
+
+                if (isTensStart) {
+                    const cur = d[0] * 10 + d[1];
+                    const q1 = Math.floor(cur / divisor);
+                    const p1 = q1 * divisor;
+                    const r1 = cur - p1;
+                    steps.push({ id: 'q1', ans: q1.toString(), r: 1, c: 3 });
+                    p1.toString().padStart(2, ' ').split('').forEach((v, i) => { if (v !== ' ') steps.push({ id: `p1_${i}`, ans: v, r: 3, c: i + 2 }); });
+                    lines.push({ r: 3, sc: 2, ec: 4 });
+                    steps.push({ id: 'r1', ans: r1.toString(), r: 4, c: 3 });
+                    steps.push({ id: 'd1', ans: d[2].toString(), r: 4, c: 4 });
+                    const cur2 = r1 * 10 + d[2];
+                    const q2 = Math.floor(cur2 / divisor);
+                    const p2 = q2 * divisor;
+                    const r2 = cur2 - p2;
+                    steps.push({ id: 'q2', ans: q2.toString(), r: 1, c: 4 });
+                    p2.toString().padStart(2, ' ').split('').forEach((v, i) => { if (v !== ' ') steps.push({ id: `p2_${i}`, ans: v, r: 5, c: i + 3 }); });
+                    lines.push({ r: 5, sc: 3, ec: 5 });
+                    steps.push({ id: 'rem', ans: r2.toString(), r: 6, c: 4 });
+                } else {
+                    const q1 = Math.floor(d[0] / divisor);
+                    const p1 = q1 * divisor;
+                    const r1 = d[0] - p1;
+                    steps.push({ id: 'q1', ans: q1.toString(), r: 1, c: 2 });
+                    steps.push({ id: 'p1', ans: p1.toString(), r: 3, c: 2 });
+                    lines.push({ r: 3, sc: 2, ec: 3 });
+                    steps.push({ id: 'r1', ans: r1.toString(), r: 4, c: 2 });
+                    steps.push({ id: 'd1', ans: d[1].toString(), r: 4, c: 3 });
+                    const cur2 = r1 * 10 + d[1];
+                    const q2 = Math.floor(cur2 / divisor);
+                    const p2 = q2 * divisor;
+                    const r2 = cur2 - p2;
+                    steps.push({ id: 'q2', ans: q2.toString(), r: 1, c: 3 });
+                    p2.toString().padStart(2, ' ').split('').forEach((v, i) => { if (v !== ' ') steps.push({ id: `p2_${i}`, ans: v, r: 5, c: i + 2 }); });
+                    lines.push({ r: 5, sc: 2, ec: 4 });
+                    steps.push({ id: 'r2', ans: r2.toString(), r: 6, c: 3 });
+                    steps.push({ id: 'd2', ans: d[2].toString(), r: 6, c: 4 });
+                    const cur3 = r2 * 10 + d[2];
+                    const q3 = Math.floor(cur3 / divisor);
+                    const p3 = q3 * divisor;
+                    const r3 = cur3 - p3;
+                    steps.push({ id: 'q3', ans: q3.toString(), r: 1, c: 4 });
+                    p3.toString().padStart(2, ' ').split('').forEach((v, i) => { if (v !== ' ') steps.push({ id: `p3_${i}`, ans: v, r: 7, c: i + 3 }); });
+                    lines.push({ r: 7, sc: 3, ec: 5 });
+                    steps.push({ id: 'rem', ans: r3.toString(), r: 8, c: 4 });
+                }
+                return { steps, lines };
+            };
+
+            useEffect(() => {
+                if (problems.length > 0) {
+                    setConfig(generateData(problems[pIdx].dividend, problems[pIdx].divisor));
+                    setVals({});
+                    setStepIdx(0);
+                }
+            }, [pIdx, problems]);
+
+            // 【重要】自動フォーカス：わずかに遅らせて実行することで確実性を高める
+            useEffect(() => {
+                const timer = setTimeout(() => {
+                    if (inputRef.current) {
+                        inputRef.current.focus();
+                    }
+                }, 50); 
+                return () => clearTimeout(timer);
+            }, [stepIdx, pIdx, config]);
+
+            const handleInput = (e) => {
+                const char = e.target.value.slice(-1);
+                if (char === config.steps[stepIdx].ans) {
+                    setVals(v => ({ ...v, [config.steps[stepIdx].id]: char }));
+                    const nextIdx = stepIdx + 1;
+                    setStepIdx(nextIdx);
+                    if (nextIdx === config.steps.length) setTimeout(() => alert("正解です！"), 100);
+                }
+            };
+
+            const renderCell = (r, c, base = null) => {
+                const step = config.steps.find(s => s.r === r && s.c === c);
+                const isTarget = step && config.steps[stepIdx] && config.steps[stepIdx].id === step.id;
+                const filled = step ? vals[step.id] : null;
+                const hasLine = config.lines.some(l => l.r === r && c >= l.sc && c < l.ec);
+                return (
+                    <div className="cell" style={{ gridRow: r, gridColumn: c }} key={`${r}-${c}`}>
+                        {isTarget ? (
+                            <input ref={inputRef} className="input-box" onChange={handleInput} value="" />
+                        ) : filled ? (
+                            <span className="correct">{filled}</span>
+                        ) : base}
+                        {hasLine && <div className="sub-line"></div>}
+                    </div>
+                );
+            };
+
+            if (problems.length === 0) return <div className="text-center mt-20 font-bold">読み込み中...</div>;
+            const current = problems[pIdx];
+            const dArr = current.dividend.toString().split('');
+
+            return (
+                <div className="max-w-3xl mx-auto bg-white p-12 rounded-3xl shadow-2xl border-4 border-slate-100 mt-6">
+                    <div className="flex justify-between items-center mb-10">
+                        <div className="bg-slate-100 px-4 py-1 rounded-full text-sm font-bold text-slate-500">
+                            問題 {pIdx + 1} / {problems.length}
+                        </div>
+                        <h1 className="text-2xl font-black text-slate-800 tracking-tighter">筆算わり算ドリル</h1>
+                        <button onClick={() => setPIdx((pIdx + 1) % problems.length)} className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 rounded-xl transition-colors shadow-lg">
+                            次の問題へ
+                        </button>
+                    </div>
+                    <div className="math-grid">
+                        {renderCell(1, 2)} {renderCell(1, 3)} {renderCell(1, 4)}
+                        <div className="cell text-4xl pr-4 font-bold" style={{gridRow: 2, gridColumn: 1}}>{current.divisor}</div>
+                        <div className="cell line-top curve-left" style={{gridRow: 2, gridColumn: 2}}>{dArr[0]}</div>
+                        <div className="cell line-top" style={{gridRow: 2, gridColumn: 3}}>{dArr[1]}</div>
+                        <div className="cell line-top" style={{gridRow: 2, gridColumn: 4}}>{dArr[2]}</div>
+                        {[3,4,5,6,7,8].map(r => [2,3,4,5].map(c => renderCell(r, c)))}
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

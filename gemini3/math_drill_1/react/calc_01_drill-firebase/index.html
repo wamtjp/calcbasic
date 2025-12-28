@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>けいさんドリル</title>
+    
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        body {
+            font-family: "Hiragino Kaku Gothic ProN", sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f8ff;
+            display: flex;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden; /* スクロール防止 */
+        }
+        #root {
+            width: 100%;
+            max-width: 600px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        /* 問題表示エリア */
+        .problem-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            margin: 10px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        .expression {
+            font-size: 4rem; /* 数字を大きく */
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .user-input {
+            font-size: 4rem;
+            color: #007bff;
+            min-height: 1.2em;
+            border-bottom: 3px solid #ccc;
+            padding: 0 10px;
+            min-width: 100px;
+            text-align: center;
+        }
+        /* メッセージエリア */
+        .message-area {
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        .msg-correct { color: #28a745; }
+        .msg-wrong { color: #dc3545; }
+
+        /* テンキーエリア */
+        .keypad {
+            height: 45%;
+            background-color: #e9ecef;
+            padding: 10px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            padding-bottom: 30px; /* iPhoneの下部バー対策 */
+        }
+        button {
+            border: none;
+            border-radius: 10px;
+            font-size: 2rem;
+            font-weight: bold;
+            cursor: pointer;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: active 0.1s;
+            touch-action: manipulation; /* タップ遅延防止 */
+        }
+        button:active { transform: scale(0.95); background-color: #ddd; }
+        .btn-num { color: #333; }
+        .btn-delete { background-color: #ffc107; color: #333; font-size: 1.5rem;}
+        .btn-enter { background-color: #007bff; color: white; font-size: 1.5rem;}
+        .btn-next { 
+            position: absolute; 
+            bottom: 20px; 
+            background-color: #28a745; 
+            color: white; 
+            padding: 10px 40px;
+            font-size: 1.5rem;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+
+<div id="root"></div>
+
+<script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const App = () => {
+        const [problems, setProblems] = useState([]);
+        const [currentIndex, setCurrentIndex] = useState(0);
+        const [userAnswer, setUserAnswer] = useState("");
+        const [feedback, setFeedback] = useState(null); // null, 'correct', 'wrong'
+
+        // CSV読み込み
+        useEffect(() => {
+            fetch('./problems.csv')
+                .then(response => {
+                    if (!response.ok) throw new Error("CSVが見つかりません");
+                    return response.text();
+                })
+                .then(text => {
+                    const lines = text.trim().split('\n');
+                    const loadedProblems = [];
+                    lines.forEach(line => {
+                        const parts = line.split(',');
+                        if (parts.length >= 3) {
+                            loadedProblems.push({
+                                n1: parts[0].trim(),
+                                op: parts[1].trim(),
+                                n2: parts[2].trim()
+                            });
+                        }
+                    });
+                    setProblems(loadedProblems);
+                })
+                .catch(err => alert("エラー: " + err.message + "\n※ローカルで開く場合、ブラウザのセキュリティ制限でCSVが読めないことがあります。VS CodeのLive Serverなどを使用してください。"));
+        }, []);
+
+        // 現在の問題
+        const currentProblem = problems[currentIndex];
+
+        // 計算ロジック
+        const getCorrectAnswer = (prob) => {
+            const n1 = parseInt(prob.n1);
+            const n2 = parseInt(prob.n2);
+            if (prob.op === '+') return n1 + n2;
+            if (prob.op === '-') return n1 - n2;
+            return 0;
+        };
+
+        // 数字キー入力
+        const handleNumClick = (num) => {
+            if (feedback === 'correct') return; // 正解後は入力不可
+            setUserAnswer(prev => prev + num);
+            setFeedback(null); // 入力しなおしたらメッセージを消す
+        };
+
+        // 削除ボタン
+        const handleDelete = () => {
+            if (feedback === 'correct') return;
+            setUserAnswer(prev => prev.slice(0, -1));
+            setFeedback(null);
+        };
+
+        // 判定（数字が入力されるたびにチェックするのは誤操作の元なので、決定ボタンか桁数判定が一般的。今回は「エンター」ボタン式にします）
+        const handleCheck = () => {
+            if (!currentProblem || !userAnswer) return;
+            
+            const correct = getCorrectAnswer(currentProblem);
+            if (parseInt(userAnswer) === correct) {
+                setFeedback('correct');
+            } else {
+                setFeedback('wrong');
+            }
+        };
+
+        // 次の問題へ
+        const handleNext = () => {
+            if (currentIndex < problems.length - 1) {
+                setCurrentIndex(prev => prev + 1);
+                setUserAnswer("");
+                setFeedback(null);
+            } else {
+                alert("もんだいは おわりです！");
+                setCurrentIndex(0); // 最初に戻る
+                setUserAnswer("");
+                setFeedback(null);
+            }
+        };
+
+        // 演算子表示変換
+        const displayOp = (op) => {
+            if (op === '*') return '×';
+            if (op === '/') return '÷';
+            return op;
+        };
+
+        if (problems.length === 0) {
+            return <div style={{padding:20}}>データを読み込んでいます...<br/>(表示されない場合はCSVファイルの配置を確認してください)</div>;
+        }
+
+        return (
+            <>
+                <div className="problem-area">
+                    <div className="expression">
+                        {currentProblem.n1} {displayOp(currentProblem.op)} {currentProblem.n2} = 
+                    </div>
+                    <div className="user-input">
+                        {userAnswer}
+                    </div>
+
+                    <div className="message-area">
+                        {feedback === 'correct' && <span className="msg-correct">せいかい！</span>}
+                        {feedback === 'wrong' && <span className="msg-wrong">まちがい</span>}
+                    </div>
+
+                    {feedback === 'correct' && (
+                        <button className="btn-next" onClick={handleNext}>つぎへ</button>
+                    )}
+                </div>
+
+                <div className="keypad">
+                    <button className="btn-num" onClick={() => handleNumClick('7')}>7</button>
+                    <button className="btn-num" onClick={() => handleNumClick('8')}>8</button>
+                    <button className="btn-num" onClick={() => handleNumClick('9')}>9</button>
+                    
+                    <button className="btn-num" onClick={() => handleNumClick('4')}>4</button>
+                    <button className="btn-num" onClick={() => handleNumClick('5')}>5</button>
+                    <button className="btn-num" onClick={() => handleNumClick('6')}>6</button>
+                    
+                    <button className="btn-num" onClick={() => handleNumClick('1')}>1</button>
+                    <button className="btn-num" onClick={() => handleNumClick('2')}>2</button>
+                    <button className="btn-num" onClick={() => handleNumClick('3')}>3</button>
+                    
+                    <button className="btn-delete" onClick={handleDelete}>けす</button>
+                    <button className="btn-num" onClick={() => handleNumClick('0')}>0</button>
+                    <button className="btn-enter" onClick={handleCheck}>判定</button>
+                </div>
+            </>
+        );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+</script>
+
+</body>
+</html>

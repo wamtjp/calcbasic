@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>日本式 筆算わり算ドリル</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 1文字ずつの幅を固定して縦を完璧に揃える */
+        .grid-cell { width: 3rem; height: 3rem; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-family: 'Courier New', monospace; }
+        .input-box { width: 2.5rem; height: 2.5rem; text-align: center; border: 2px solid #3b82f6; border-radius: 4px; font-size: 1.5rem; background-color: #eff6ff; }
+        .input-box:focus { outline: none; background-color: #fff; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5); }
+        .input-correct { border-color: #10b981; background-color: #ecfdf5; color: #059669; }
+        
+        /* 日本式の線（上線と左のカーブ） */
+        .line-top { border-top: 3px solid black; }
+        .curve-left { 
+            border-left: 3px solid black; 
+            border-top-left-radius: 20px 40px;
+            margin-left: 10px;
+        }
+        .sub-line { border-top: 2px solid #4b5563; width: 100%; grid-column: span 3; margin-top: -2px; }
+    </style>
+</head>
+<body class="bg-gray-100 p-4">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        function DivisionDrill() {
+            // ステップごとの設定（正解、場所、説明）
+            const steps = [
+                { id: 'q1', ans: '3', label: '19の中に5は何回ある？（商を立てる）' },
+                { id: 'p1a', ans: '1', label: '5 × 3 = 15 を書こう（かける）' },
+                { id: 'p1b', ans: '5', label: '5 × 3 = 15 を書こう（かける）' },
+                { id: 'r1', ans: '4', label: '19 - 15 = 4（ひく）' },
+                { id: 'd1', ans: '7', label: 'となりの 7 をおろそう（おろす）' },
+                { id: 'q2', ans: '9', label: '47の中に5は何回ある？（商を立てる）' },
+                { id: 'p2a', ans: '4', label: '5 × 9 = 45（かける）' },
+                { id: 'p2b', ans: '5', label: '5 × 9 = 45（かける）' },
+                { id: 'rem', ans: '2', label: '47 - 45 = 2（あまり）' }
+            ];
+
+            const [currentStepIdx, setCurrentStepIdx] = useState(0);
+            const [vals, setVals] = useState({});
+            const inputRef = useRef(null);
+
+            // 自動フォーカス
+            useEffect(() => {
+                if (inputRef.current) inputRef.current.focus();
+            }, [currentStepIdx]);
+
+            const handleInput = (e) => {
+                const val = e.target.value;
+                const currentStep = steps[currentStepIdx];
+                
+                if (val === currentStep.ans) {
+                    setVals({ ...vals, [currentStep.id]: val });
+                    if (currentStepIdx < steps.length - 1) {
+                        setCurrentStepIdx(currentStepIdx + 1);
+                    } else {
+                        alert("正解！全問クリアです。");
+                    }
+                }
+            };
+
+            const Cell = ({ id, content }) => (
+                <div className="grid-cell">
+                    {vals[id] ? (
+                        <span className="text-gray-800 font-bold">{vals[id]}</span>
+                    ) : (
+                        currentStepIdx < steps.length && steps[currentStepIdx].id === id ? (
+                            <input
+                                ref={inputRef}
+                                className="input-box"
+                                maxLength="1"
+                                onChange={handleInput}
+                                value=""
+                            />
+                        ) : content || ""
+                    )}
+                </div>
+            );
+
+            return (
+                <div className="max-w-md mx-auto bg-white p-8 rounded-xl shadow-2xl mt-10">
+                    <h2 className="text-center text-xl font-bold mb-6 text-gray-700">わり算の ひっ算</h2>
+                    
+                    {/* 筆算エリア（5列のグリッド） */}
+                    <div className="grid grid-cols-5 gap-0 w-max mx-auto mb-8">
+                        {/* 1段目: 商 */}
+                        <div className="grid-cell"></div>
+                        <div className="grid-cell"></div>
+                        <Cell id="q1" />
+                        <Cell id="q2" />
+                        <div className="grid-cell"></div>
+
+                        {/* 2段目: 割る数と割られる数 */}
+                        <div className="grid-cell text-2xl pr-2">5</div>
+                        <div className="grid-cell curve-left line-top">1</div>
+                        <div className="grid-cell line-top">9</div>
+                        <div className="grid-cell line-top">7</div>
+                        <div className="grid-cell"></div>
+
+                        {/* 3段目: 15 */}
+                        <div className="grid-cell"></div>
+                        <div className="grid-cell"></div>
+                        <Cell id="p1a" />
+                        <Cell id="p1b" />
+                        <div className="grid-cell"></div>
+
+                        {/* 4段目: 線と 47 */}
+                        <div className="grid-cell"></div>
+                        <div className="grid-cell"></div>
+                        <div className="sub-line col-start-3"></div>
+                        <div className="grid-cell"></div>
+                        <div className="grid-cell"></div>
+                        <Cell id="r1" />
+                        <Cell id="d1" />
+                        <div className="grid-cell"></div>
+
+                        {/* 5段目: 45 */}
+                        <div className="grid-cell"></div>
+                        <div className="grid-cell"></div>
+                        <div className="grid-cell"></div>
+                        <Cell id="p2a" />
+                        <Cell id="p2b" />
+
+                        {/* 6段目: 線と あまり2 */}
+                        <div className="grid-cell"></div>
+                        <div className="grid-cell"></div>
+                        <div className="grid-cell"></div>
+                        <div className="sub-line col-start-4"></div>
+                        <div className="grid-cell"></div>
+                        <div className="grid-cell"></div>
+                        <div className="grid-cell"></div>
+                        <Cell id="rem" />
+                    </div>
+
+                    {/* ガイドメッセージ */}
+                    <div className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500 min-h-[80px] flex items-center">
+                        <p className="text-blue-800 font-medium">
+                            {currentStepIdx < steps.length ? steps[currentStepIdx].label : "よくできました！"}
+                        </p>
+                    </div>
+
+                    <button 
+                        onClick={() => {setVals({}); setCurrentStepIdx(0);}}
+                        className="mt-6 w-full py-2 text-gray-500 hover:text-gray-700 underline text-sm"
+                    >
+                        最初からやりなおす
+                    </button>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<DivisionDrill />);
+    </script>
+</body>
+</html>

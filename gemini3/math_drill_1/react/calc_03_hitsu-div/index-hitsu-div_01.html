@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>筆算わり算ドリル</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .division-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 3rem);
+            gap: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.5rem;
+            text-align: center;
+        }
+        input {
+            width: 2.5rem;
+            height: 2.5rem;
+            text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1.2rem;
+        }
+        input.correct { background-color: #d1fae5; border-color: #10b981; }
+        .line-top { border-top: 3px solid black; }
+        .line-left { border-left: 3px solid black; border-top-left-radius: 10px; }
+    </style>
+</head>
+<body class="bg-gray-50 p-4">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        function DivisionDrill() {
+            // 正解の値
+            const answers = {
+                q1: "3", q2: "9",
+                p1a: "1", p1b: "5",
+                r1: "4", d1: "7",
+                p2a: "4", p2b: "5",
+                rem: "2"
+            };
+
+            const [userInputs, setUserInputs] = useState({});
+            const [checked, setChecked] = useState(false);
+
+            const handleChange = (e, key) => {
+                setUserInputs({ ...userInputs, [key]: e.target.value });
+            };
+
+            const isCorrect = (key) => checked && userInputs[key] === answers[key];
+
+            return (
+                <div class="max-w-md mx-auto bg-white p-6 rounded-shadow shadow-md">
+                    <h1 class="text-xl font-bold mb-6 text-center">わり算のひっ算を しよう</h1>
+                    
+                    <div class="division-grid mx-auto w-max">
+                        {/* 商の入力欄 */}
+                        <div></div><div></div>
+                        <input value={userInputs.q1 || ""} onChange={(e)=>handleChange(e, 'q1')} class={isCorrect('q1') ? "correct" : ""} />
+                        <input value={userInputs.q2 || ""} onChange={(e)=>handleChange(e, 'q2')} class={isCorrect('q2') ? "correct" : ""} />
+                        <div></div>
+
+                        {/* 問題部分 */}
+                        <div class="flex items-center justify-end pr-2 text-2xl">5</div>
+                        <div class="line-top line-left pt-1">1</div>
+                        <div class="line-top pt-1">9</div>
+                        <div class="line-top pt-1">7</div>
+                        <div></div>
+
+                        {/* 1回目の掛け算 (15) */}
+                        <div></div><div></div>
+                        <input value={userInputs.p1a || ""} onChange={(e)=>handleChange(e, 'p1a')} class={isCorrect('p1a') ? "correct" : ""} />
+                        <input value={userInputs.p1b || ""} onChange={(e)=>handleChange(e, 'p1b')} class={isCorrect('p1b') ? "correct" : ""} />
+                        <div></div>
+
+                        {/* 引き算の結果 (4) と 降ろしてきた (7) */}
+                        <div></div>
+                        <div class="col-span-3 border-t-2 border-gray-400"></div><div></div>
+                        <div></div><div></div>
+                        <input value={userInputs.r1 || ""} onChange={(e)=>handleChange(e, 'r1')} class={isCorrect('r1') ? "correct" : ""} />
+                        <input value={userInputs.d1 || ""} onChange={(e)=>handleChange(e, 'd1')} class={isCorrect('d1') ? "correct" : ""} />
+                        <div></div>
+
+                        {/* 2回目の掛け算 (45) */}
+                        <div></div><div></div><div></div>
+                        <input value={userInputs.p2a || ""} onChange={(e)=>handleChange(e, 'p2a')} class={isCorrect('p2a') ? "correct" : ""} />
+                        <input value={userInputs.p2b || ""} onChange={(e)=>handleChange(e, 'p2b')} class={isCorrect('p2b') ? "correct" : ""} />
+
+                        {/* 最後のあまり (2) */}
+                        <div></div><div></div><div></div>
+                        <div class="col-span-2 border-t-2 border-gray-400"></div>
+                        <div></div><div></div><div></div><div></div>
+                        <input value={userInputs.rem || ""} onChange={(e)=>handleChange(e, 'rem')} class={isCorrect('rem') ? "correct" : ""} />
+                    </div>
+
+                    <div class="mt-8 flex flex-col gap-4">
+                        <button 
+                            onClick={() => setChecked(true)}
+                            class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700"
+                        >
+                            答え合わせ
+                        </button>
+                        <button 
+                            onClick={() => {setUserInputs({}); setChecked(false);}}
+                            class="w-full bg-gray-200 text-gray-700 py-2 rounded-lg"
+                        >
+                            やりなおす
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<DivisionDrill />);
+    </script>
+</body>
+</html>
