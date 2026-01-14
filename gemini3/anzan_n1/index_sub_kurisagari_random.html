@@ -27,7 +27,7 @@
             const [feedback, setFeedback] = useState(null);
 
             useEffect(() => {
-                fetch('problems_add_kuriagari_random.csv')
+                fetch('problems_sub_kurisagari_random.csv')
                     .then(res => res.text())
                     .then(text => {
                         const data = text.split('\n').slice(1).filter(l => l).map(l => {
