@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>暗算トレーニング Pro</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* iPadの高さに合わせて調整 */
+        .full-height { height: 100vh; }
+        .key-btn { font-size: 2rem; font-weight: bold; height: 80px; }
+    </style>
+</head>
+<body class="bg-slate-50 overflow-hidden">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        function App() {
+            const [problems, setProblems] = useState([]);
+            const [currentIndex, setCurrentIndex] = useState(0);
+            const [userInput, setUserInput] = useState("");
+            const [feedback, setFeedback] = useState(null);
+
+            useEffect(() => {
+                fetch('problems_shousuu_random.csv')
+                    .then(res => res.text())
+                    .then(text => {
+                        const data = text.split('\n').slice(1).filter(l => l).map(l => {
+                            const v = l.split(',');
+                            return { id: v[0], num1: v[3], op: v[4], num2: v[5], ans: v[6] };
+                        });
+                        setProblems(data);
+                    });
+            }, []);
+
+            const handleKeyInput = (num) => {
+                if (feedback) return;
+                setUserInput(prev => prev + num);
+            };
+
+            const handleDelete = () => {
+                if (feedback) return;
+                setUserInput(prev => prev.slice(0, -1));
+            };
+
+            const checkAnswer = () => {
+                if (!userInput) return;
+                const current = problems[currentIndex];
+                if (userInput === current.ans) {
+                    setFeedback("⭕ RIGHT！");
+                } else {
+                    setFeedback(`❌ WRONG (answer: ${current.ans})`);
+                }
+            };
+
+            const nextProblem = () => {
+                setCurrentIndex(prev => (prev + 1) % problems.length);
+                setUserInput("");
+                setFeedback(null);
+            };
+
+            if (problems.length === 0) return <div class="p-10">読み込み中...</div>;
+            const current = problems[currentIndex];
+
+            return (
+                <div class="flex full-height">
+                    {/* 左側：問題表示 */}
+                    <div class="w-1/2 flex flex-col items-center justify-center border-r-2 border-slate-200 bg-white p-10">
+                        <div class="text-slate-400 text-2xl mb-4 font-bold">問題 {current.id}</div>
+                        <div class="text-7xl font-mono font-bold text-slate-800 mb-10">
+                            {current.num1} {current.op} {current.num2} = 
+                        </div>
+                        <div class="w-64 h-24 border-b-4 border-blue-500 flex items-center justify-center text-6xl font-mono text-blue-600 bg-blue-50">
+                            {userInput}
+                        </div>
+                        <div class="mt-10 h-10 text-3xl font-bold">
+                            {feedback && (
+                                <span class={feedback.includes('⭕') ? 'text-green-500' : 'text-red-500'}>
+                                    {feedback}
+                                </span>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* 右側：テンキー */}
+                    <div class="w-1/2 bg-slate-100 p-8 flex flex-col justify-center">
+                        <div class="grid grid-cols-3 gap-4 mb-8">
+                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 0, "."].map(n => (
+                                <button key={n} onClick={() => handleKeyInput(n)} 
+                                    class="key-btn bg-white rounded-xl shadow active:bg-slate-200 transition">
+                                    {n}
+                                </button>
+                            ))}
+                            <button onClick={handleDelete} 
+                                class="key-btn col-span bg-orange-100 text-orange-600 rounded-xl shadow active:bg-orange-200">
+                                DEL
+                            </button>
+                        </div>
+
+                        {!feedback ? (
+                            <button onClick={checkAnswer} 
+                                class="w-full py-6 bg-blue-500 text-white rounded-2xl text-3xl font-bold shadow-lg active:bg-blue-600">
+                                GO!
+                            </button>
+                        ) : (
+                            <button onClick={nextProblem} 
+                                class="w-full py-6 bg-green-500 text-white rounded-2xl text-3xl font-bold shadow-lg active:bg-green-600 animate-bounce">
+                                NEXT
+                            </button>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
