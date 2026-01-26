@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>2ねん・座席表モニター（完成版）</title>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, query, orderBy, onSnapshot, where, Timestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        const firebaseConfig = {
+            apiKey: "AIzaSyAOJnHuUqjc8caecnNu_pkul2ORvzWmox0",
+            authDomain: "start01-20260120a-76f80.firebaseapp.com",
+            projectId: "start01-20260120a-76f80",
+            storageBucket: "start01-20260120a-76f80.firebasestorage.app",
+            messagingSenderId: "213284691100",
+            appId: "1:213284691100:web:046aa5f86e4cb1a2562159"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const studentList = ["2101", "2102", "2103", "2111", "2202", "2203", "2204", "2209"];
+        let seats = ["2209", "2202", "2103", "2204", "2111", "2102", "2203", "empty", "2101"];
+
+        let studentData = {};
+        let totalCount = 0;
+        let isStudentView = true;
+        let isEditMode = false;
+        let startTime = Timestamp.now();
+
+        window.onload = () => {
+            studentList.forEach(id => { studentData[id] = { count: 0, lastProblem: "-", miss: 0, isAbsent: false }; });
+            renderBoard();
+            startListening();
+        };
+
+        window.renderBoard = () => {
+            const board = document.getElementById("board");
+            board.innerHTML = "";
+            let dSeats = isStudentView ? [...seats] : [...seats].reverse();
+            dSeats.forEach((sid, idx) => {
+                const card = document.createElement("div");
+                if (isEditMode) {
+                    card.className = "student-card editing";
+                    const rIdx = isStudentView ? idx : 8 - idx;
+                    let opts = `<option value="empty" ${sid === 'empty' ? 'selected' : ''}>(空)</option>`;
+                    studentList.forEach(id => { opts += `<option value="${id}" ${sid === id ? 'selected' : ''}>${id}</option>`; });
+                    card.innerHTML = `<select onchange="updateSeat(${rIdx}, this.value)">${opts}</select>`;
+                    board.appendChild(card);
+                    return;
+                }
+                if (sid === "empty") { card.className = "student-card empty-slot"; board.appendChild(card); return; }
+                const d = studentData[sid];
+                card.id = `card-${sid}`;
+                const aC = (d.miss >= 3) ? 'alert' : '';
+                card.className = `student-card ${d.isAbsent ? 'absent' : ''} ${aC}`;
+                card.innerHTML = `<div class="card-header"><span class="student-id">${sid}</span><button class="status-toggle" onclick="toggleAttendance('${sid}')">${d.isAbsent ? '欠' : '出'}</button></div><div class="student-name">生徒${sid}</div><div class="count-badge">せいかい: <span id="count-${sid}">${d.count}</span></div><div class="status-row"><span class="status-prob" id="status-${sid}">${d.lastProblem}</span><span class="status-miss" id="miss-${sid}">${d.miss > 0 ? '×' + d.miss : ''}</span></div>`;
+                board.appendChild(card);
+            });
+        };
+        window.updateSeat = (idx, nId) => { seats[idx] = nId; };
+        window.toggleEditMode = () => { isEditMode = !isEditMode; document.getElementById("edit-btn").textContent = isEditMode ? "確定" : "座席指定"; renderBoard(); };
+        window.toggleAttendance = (id) => { studentData[id].isAbsent = !studentData[id].isAbsent; renderBoard(); };
+        window.toggleView = () => { isStudentView = !isStudentView; document.getElementById("view-label").textContent = isStudentView ? "生徒視点" : "教員視点"; renderBoard(); };
+
+        function startListening() {
+            const q = query(collection(db, "logs_2nen"), where("timestamp", ">", startTime), orderBy("timestamp", "asc"));
+            onSnapshot(q, (snapshot) => { snapshot.docChanges().forEach((change) => { if (change.type === "added") { const data = change.doc.data(); if (studentData[data.student_id]) { studentData[data.student_id].count++; studentData[data.student_id].lastProblem = data.problem; studentData[data.student_id].miss = data.miss_count; totalCount++; updateUI(data.student_id); } } }); });
+        }
+        function updateUI(sid) {
+            document.getElementById("total-display").textContent = totalCount;
+            const data = studentData[sid];
+            const card = document.getElementById(`card-${sid}`);
+            if (card && !data.isAbsent) {
+                const cE = document.getElementById(`count-${sid}`), sE = document.getElementById(`status-${sid}`), mE = document.getElementById(`miss-${sid}`);
+                if(cE) cE.textContent = data.count; if(sE) sE.textContent = data.lastProblem; if(mE) mE.textContent = data.miss > 0 ? '×' + data.miss : '';
+                if (data.miss >= 3) card.classList.add('alert'); else card.classList.remove('alert');
+                
+                // アニメーションの再起動ロジック
+                card.classList.remove("highlight"); 
+                void card.offsetWidth; // リフローを強制してアニメーションをリセット
+                card.classList.add("highlight");
+            }
+        }
+    </script>
+    <style>
+        body { font-family: sans-serif; background: #1a1a1a; color: #eee; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        .header { background: #333; padding: 5px 15px; border-bottom: 3px solid #4CAF50; display: flex; justify-content: space-between; align-items: center; min-height: 55px; }
+        #total-display { color: #4CAF50; font-size: 2.2rem; font-weight: bold; }
+        .btn-group { display: flex; gap: 8px; align-items: center; }
+        .view-btn, .edit-btn { padding: 5px 12px; font-size: 0.9rem; cursor: pointer; background: #444; color: white; border-radius: 4px; border: none; }
+        .edit-btn { background: #2196F3; }
+        #board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 8px; flex-grow: 1; }
+        .student-card { background: #2a2a2a; border: 1px solid #444; border-radius: 6px; padding: 6px; display: flex; flex-direction: column; justify-content: space-between; position: relative; }
+        .student-card.editing select { font-size: 1rem; width: 90%; }
+        .empty-slot { background: transparent; border: none; }
+        .student-card.alert { border: 2px solid #ff4444 !important; background: #2a1515; }
+        .student-card.absent { opacity: 0.15; }
+        .card-header { display: flex; justify-content: space-between; height: 20px; }
+        .student-id { font-size: 0.75rem; color: #888; }
+        .status-toggle { font-size: 0.7rem; padding: 2px 6px; background: #4CAF50; border-radius: 3px; border: none; cursor: pointer; }
+        .student-name { font-size: 1.1rem; font-weight: bold; }
+        .count-badge { font-size: 1rem; color: #4CAF50; }
+        .status-row { display: flex; justify-content: space-between; border-top: 1px solid #444; }
+        .status-prob { font-size: 1.3rem; color: #fff; font-family: monospace; }
+        .status-miss { font-size: 1.2rem; color: #ffbb00; }
+
+        /* アニメーションの定義 */
+        .highlight { animation: flash 0.8s ease-out; }
+        @keyframes flash { 
+            0% { background-color: #4CAF50; transform: scale(1.05); z-index: 10; } 
+            100% { background-color: #2a2a2a; transform: scale(1.0); z-index: 1; } 
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div style="font-size: 1.1rem;">🚀 合計 <span id="total-display">0</span> 問</div>
+        <div class="btn-group">
+            <span id="view-label" style="color: #aaa; font-size: 0.8rem;">生徒視点</span>
+            <button class="view-btn" onclick="toggleView()">視点切替</button>
+            <button id="edit-btn" class="edit-btn" onclick="toggleEditMode()">座席指定</button>
+        </div>
+    </div>
+    <div id="board"></div>
+</body>
+</html>
