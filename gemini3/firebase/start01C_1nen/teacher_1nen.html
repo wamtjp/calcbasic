@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>座席表モニター（見守りアラート版）</title>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, query, orderBy, limit, onSnapshot, where, Timestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAOJnHuUqjc8caecnNu_pkul2ORvzWmox0",
+            authDomain: "start01-20260120a-76f80.firebaseapp.com",
+            projectId: "start01-20260120a-76f80",
+            storageBucket: "start01-20260120a-76f80.firebasestorage.app",
+            messagingSenderId: "213284691100",
+            appId: "1:213284691100:web:046aa5f86e4cb1a2562159"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const classRoster = [
+            { id: 1, name: "生徒1104" }, { id: 2, name: "生徒1107" }, { id: 3, name: "生徒1109" }, { id: 4, name: "生徒1114" },
+            { id: 5, name: "生徒1115" }, { id: 6, name: "生徒1116" }, { id: 7, name: "生徒1206" }, { id: 8, name: "生徒1208" },
+            { id: 9, name: "生徒1211" }, { id: 10, name: "生徒1213" }, { id: 11, name: "生徒1215" }, { id: 12, name: "生徒1218" }
+        ];
+
+        let studentData = {};
+        let totalCount = 0;
+        let isStudentView = true;
+        let startTime = Timestamp.now();
+
+        window.onload = () => {
+            classRoster.forEach(s => {
+                studentData[s.id] = { count: 0, lastProblem: "-", miss: 0, isAbsent: false };
+            });
+            renderBoard();
+            startListening();
+        };
+
+        window.renderBoard = () => {
+            const board = document.getElementById("board");
+            board.innerHTML = "";
+            let displayList = isStudentView ? [...classRoster] : [...classRoster].reverse();
+
+            displayList.forEach(student => {
+                const data = studentData[student.id];
+                const card = document.createElement("div");
+                card.id = `card-${student.id}`;
+                // ミス3回以上ならalertクラスを付与
+                const alertClass = (data.miss >= 3) ? 'alert' : '';
+                card.className = `student-card ${data.isAbsent ? 'absent' : ''} ${alertClass}`;
+                
+                card.innerHTML = `
+                    <div class="card-header">
+                        <span class="student-id">${student.id}</span>
+                        <button class="status-toggle" onclick="toggleAttendance(${student.id})">
+                            ${data.isAbsent ? '欠' : '出'}
+                        </button>
+                    </div>
+                    <div class="student-name">${student.name}</div>
+                    <div class="count-badge">正解: <span id="count-${student.id}">${data.count}</span></div>
+                    <div class="status-row">
+                        <span class="status-prob" id="status-${student.id}">${data.lastProblem}</span>
+                        <span class="status-miss" id="miss-${student.id}">${data.miss > 0 ? '×' + data.miss : ''}</span>
+                    </div>
+                `;
+                board.appendChild(card);
+            });
+        };
+
+        window.toggleAttendance = (id) => {
+            studentData[id].isAbsent = !studentData[id].isAbsent;
+            renderBoard();
+        };
+
+        window.toggleView = () => {
+            isStudentView = !isStudentView;
+            document.getElementById("view-label").textContent = isStudentView ? "生徒視点（1が左上）" : "教員視点（12が左上）";
+            renderBoard();
+        };
+
+        function startListening() {
+            const q = query(collection(db, "study_logs"), where("timestamp", ">", startTime), orderBy("timestamp", "asc"));
+            onSnapshot(q, (snapshot) => {
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === "added") {
+                        const data = change.doc.data();
+                        if (studentData[data.student_id]) {
+                            studentData[data.student_id].count++;
+                            studentData[data.student_id].lastProblem = data.problem;
+                            studentData[data.student_id].miss = data.miss_count;
+                            totalCount++;
+                            updateUI(data.student_id);
+                        }
+                    }
+                });
+            });
+        }
+
+        function updateUI(sid) {
+            document.getElementById("total-display").textContent = totalCount;
+            const data = studentData[sid];
+            const card = document.getElementById(`card-${sid}`);
+            const countElem = document.getElementById(`count-${sid}`);
+            const statusElem = document.getElementById(`status-${sid}`);
+            const missElem = document.getElementById(`miss-${sid}`);
+
+            if (countElem) countElem.textContent = data.count;
+            if (statusElem) statusElem.textContent = data.lastProblem;
+            if (missElem) missElem.textContent = data.miss > 0 ? '×' + data.miss : '';
+
+            if (card && !data.isAbsent) {
+                // ミス判定による枠色変更
+                if (data.miss >= 3) {
+                    card.classList.add('alert');
+                } else {
+                    card.classList.remove('alert');
+                }
+                
+                // 光る演出
+                card.classList.remove("highlight");
+                void card.offsetWidth; 
+                card.classList.add("highlight");
+            }
+        }
+    </script>
+    <style>
+        body { font-family: sans-serif; background: #1a1a1a; color: #eee; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        
+        .header { background: #333; padding: 10px 20px; border-bottom: 4px solid #4CAF50; display: flex; justify-content: space-between; align-items: center; min-height: 90px; }
+        .total-box { font-size: 2.2rem; font-weight: bold; }
+        #total-display { color: #4CAF50; font-size: 4rem; margin: 0 10px; }
+        
+        .view-btn { padding: 12px 24px; font-size: 1.3rem; cursor: pointer; background: #444; color: white; border: 2px solid #666; border-radius: 8px; }
+        #view-label { font-size: 1.2rem; display: block; margin-bottom: 5px; color: #aaa; text-align: right; }
+        
+        #board { 
+            display: grid; grid-template-rows: repeat(4, 1fr); grid-template-columns: repeat(3, 1fr); 
+            grid-auto-flow: column; gap: 10px; padding: 15px; flex-grow: 1;
+        }
+
+        .student-card { 
+            background: #2a2a2a; border: 2px solid #444; border-radius: 10px; padding: 10px;
+            display: flex; flex-direction: column; justify-content: space-between; transition: 0.3s;
+        }
+        
+        /* 要支援アラート（赤枠と影） */
+        .student-card.alert { 
+            border: 4px solid #ff4444 !important; 
+            box-shadow: 0 0 15px rgba(255, 68, 68, 0.6);
+            background: #3a1a1a;
+        }
+        
+        .student-card.absent { opacity: 0.15; background: #000; border-style: dashed; }
+        
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .student-id { font-size: 1rem; color: #888; }
+        .status-toggle { font-size: 1rem; padding: 5px 10px; cursor: pointer; border-radius: 5px; border: none; background: #4CAF50; color: white; }
+
+        .student-name { font-size: 1.8rem; font-weight: bold; white-space: nowrap; overflow: hidden; }
+        .count-badge { font-size: 1.5rem; color: #4CAF50; font-weight: bold; }
+        
+        .status-row { 
+            display: flex; justify-content: space-between; align-items: center;
+            border-top: 2px solid #444; padding-top: 5px; 
+        }
+        .status-prob { font-size: 1.8rem; color: #fff; font-family: monospace; }
+        .status-miss { font-size: 1.6rem; color: #ffbb00; font-weight: bold; }
+
+        .highlight { animation: flash 0.5s ease-out; }
+        @keyframes flash { 0% { background-color: #4CAF50; transform: scale(1.02); } 100% { background-color: #2a2a2a; transform: scale(1.0); } }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="total-box">
+            🚀 合計 <span id="total-display">0</span> 問
+        </div>
+        <div>
+            <span id="view-label">生徒視点（1が左上）</span>
+            <button class="view-btn" onclick="toggleView()">視点切り替え</button>
+        </div>
+    </div>
+    <div id="board"></div>
+</body>
+</html>

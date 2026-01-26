@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>たし算ドリル（生徒用）</title>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAOJnHuUqjc8caecnNu_pkul2ORvzWmox0",
+            authDomain: "start01-20260120a-76f80.firebaseapp.com",
+            projectId: "start01-20260120a-76f80",
+            storageBucket: "start01-20260120a-76f80.firebasestorage.app",
+            messagingSenderId: "213284691100",
+            appId: "1:213284691100:web:046aa5f86e4cb1a2562159"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // --- 新講座 名簿設定 (座席順) ---
+        const classRoster = [
+            { id: "2209", name: "2209" }, { id: "2204", name: "2204" }, { id: "2203", name: "2203" },
+            { id: "2202", name: "2202" }, { id: "2111", name: "2111" }, { id: "empty", isEmpty: true }, // 空席
+            { id: "2103", name: "2103" }, { id: "2102", name: "2102" }, { id: "2101", name: "2101" }
+        ];
+
+        let currentStudent = null;
+        let currentProblem = null;
+        let missCount = 0;
+        let startTime = null;
+
+        const listDiv = document.getElementById("student-list");
+        classRoster.forEach(student => {
+            if (student.isEmpty) return; // 空席はボタンを作らない
+            const btn = document.createElement("button");
+            btn.className = "btn";
+            btn.textContent = student.name;
+            btn.onclick = () => startDrill(student);
+            listDiv.appendChild(btn);
+        });
+
+        function startDrill(student) {
+            currentStudent = student;
+            document.getElementById("login-screen").style.display = "none";
+            document.getElementById("drill-screen").style.display = "block";
+            document.getElementById("display-name").textContent = `${student.name} さん`;
+            makeProblem();
+        }
+
+        function makeProblem() {
+            const a = Math.floor(Math.random() * 5) + 1;
+            const b = Math.floor(Math.random() * 5) + 1;
+            currentProblem = { a, b, answer: a + b };
+            missCount = 0;
+            startTime = Date.now();
+            document.getElementById("question").textContent = `${a} + ${b} = `;
+            document.getElementById("answer-input").value = "";
+            document.getElementById("answer-input").focus();
+            document.getElementById("message").textContent = "";
+        }
+
+        window.checkAnswer = async () => {
+            const input = parseInt(document.getElementById("answer-input").value);
+            if (isNaN(input)) return;
+            if (input === currentProblem.answer) {
+                const duration = (Date.now() - startTime) / 1000;
+                document.getElementById("message").style.color = "orange";
+                document.getElementById("message").textContent = "○ せいかい！";
+                try {
+                    await addDoc(collection(db, "study_logs"), {
+                        student_id: currentStudent.id,
+                        student_name: currentStudent.name,
+                        problem: `${currentProblem.a}+${currentProblem.b}`,
+                        miss_count: missCount,
+                        duration: duration,
+                        timestamp: serverTimestamp()
+                    });
+                } catch (e) { console.error(e); }
+                setTimeout(makeProblem, 1000);
+            } else {
+                missCount++;
+                document.getElementById("message").style.color = "blue";
+                document.getElementById("message").textContent = "× ざんねん！";
+                document.getElementById("answer-input").value = "";
+                document.getElementById("answer-input").focus();
+            }
+        };
+    </script>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #f9f9f9; padding-top: 20px; }
+        .btn { padding: 15px 30px; font-size: 1.2rem; margin: 5px; cursor: pointer; border-radius: 10px; border: 1px solid #ccc; background: white; }
+        #drill-screen { display: none; }
+        #question { font-size: 5rem; font-weight: bold; margin: 20px 0; }
+        #answer-input { font-size: 4rem; width: 120px; text-align: center; border: 2px solid #ccc; border-radius: 10px; }
+        #message { font-size: 2.5rem; height: 3rem; margin: 20px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div id="login-screen">
+        <h1>名前をえらんでね</h1>
+        <div id="student-list"></div>
+    </div>
+    <div id="drill-screen">
+        <p id="display-name"></p>
+        <div id="question"></div>
+        <input type="number" id="answer-input" pattern="\d*" inputmode="numeric">
+        <br><br>
+        <button class="btn" style="background:#4CAF50; color:white; font-size: 2rem; padding: 20px 50px;" onclick="checkAnswer()">決定</button>
+        <div id="message"></div>
+    </div>
+</body>
+</html>
