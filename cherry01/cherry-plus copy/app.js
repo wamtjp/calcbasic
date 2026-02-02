@@ -1,0 +1,166 @@
+const { useState, useEffect, useRef } = React;
+
+// --- 問題を生成する関数 ---
+const generateProblem = (previousProblem = null) => {
+  let num1, num2;
+  do {
+    // ★問題の難易度を変えたい場合は、ここの数値を変更
+    // num1: 6〜9の数を生成
+    num1 = Math.floor(Math.random() * 4) + 6;
+    // num2: num1と足して11以上になる数を生成
+    const minNum2 = 11 - num1;
+    num2 = Math.floor(Math.random() * (9 - minNum2 + 1)) + minNum2;
+  } while (previousProblem && previousProblem.num1 === num1 && previousProblem.num2 === num2);
+
+  // --- 計算の答えを定義 ---
+  const neededFor10 = 10 - num1; // さくらんぼ1 (8に対して2)
+  const remainder = num2 - neededFor10; // さくらんぼ2 (5-2=3)
+
+  return {
+    num1, // 問題の数字1 (例: 8)
+    num2, // 問題の数字2 (例: 5)
+    neededFor10, // 答え1
+    remainder,   // 答え2
+    answer: num1 + num2, // 最終的な答え
+  };
+};
+
+// --- メインのアプリケーションコンポーネント ---
+function App() {
+  // --- state管理 (アプリの状態を記憶する変数) ---
+  const [problem, setProblem] = useState(generateProblem()); // 現在の問題
+  const [step, setStep] = useState(0); // 今どの入力ステップか
+  const [sakuranbo1, setSakuranbo1] = useState(''); // さくらんぼ1の入力値
+  const [sakuranbo2, setSakuranbo2] = useState(''); // さくらんぼ2の入力値
+  const [finalAnswer, setFinalAnswer] = useState(''); // 最終的な答えの入力値
+
+  // --- DOM要素への参照 (入力欄などを直接操作するために使用) ---
+  const sakuranbo1Ref = useRef(null);
+  const sakuranbo2Ref = useRef(null);
+  const finalAnswerRef = useRef(null);
+  const targetNumberRef = useRef(null); // さくらんぼの枝の開始点を決めるための参照
+  const containerRef = useRef(null);
+
+  const [lineStartX, setLineStartX] = useState(0); // さくらんぼの枝の開始X座標
+
+  // --- ステップが進んだら、次の入力欄に自動でフォーカスを移動させる ---
+  useEffect(() => {
+    if (step === 1) sakuranbo1Ref.current.focus();
+    if (step === 2) sakuranbo2Ref.current.focus();
+    if (step === 4) finalAnswerRef.current.focus();
+  }, [step]);
+
+  // --- 問題が変わったら、さくらんぼの枝の開始位置を再計算する ---
+  useEffect(() => {
+    setTimeout(() => {
+      if (targetNumberRef.current && containerRef.current) {
+        const containerRect = containerRef.current.getBoundingClientRect();
+        const targetRect = targetNumberRef.current.getBoundingClientRect();
+        const targetCenterX = targetRect.left + targetRect.width / 2 - containerRect.left;
+        setLineStartX(targetCenterX);
+      }
+    }, 0);
+  }, [problem]);
+
+  // --- 「次の問題へ」ボタンが押されたときの処理 ---
+  const goToNextProblem = () => {
+    setProblem(prev => generateProblem(prev)); // 新しい問題を生成
+    setStep(1); // ステップを最初に戻す
+    // 全ての入力欄を空にする
+    setSakuranbo1('');
+    setSakuranbo2('');
+    setFinalAnswer('');
+  };
+  
+  // --- 最初にアプリが表示されたときにステップを1にする ---
+  useEffect(() => {
+    setStep(1);
+  }, []);
+
+  // --- 入力欄の値が変更されたときの処理 ---
+  const handleSakuranbo1Change = (e) => {
+    const val = e.target.value;
+    setSakuranbo1(val);
+    // 入力値が正解なら、次のステップに進む
+    if (val === String(problem.neededFor10)) setStep(2);
+  };
+  const handleSakuranbo2Change = (e) => {
+    const val = e.target.value;
+    setSakuranbo2(val);
+    if (val === String(problem.remainder)) setStep(4); // ステップ3は無いので4へ
+  };
+  const handleFinalAnswerChange = (e) => {
+    const val = e.target.value;
+    setFinalAnswer(val);
+    if (val === String(problem.answer)) setStep(5); // ステップ5が最終(正解)
+  };
+
+  // --- 画面に表示する内容 (HTMLのようなもの) ---
+  return (
+    <div ref={containerRef}>
+      <div className="problem">
+        <span className={step >= 2 ? 'highlight-step3' : ''}>{problem.num1} + </span>
+        <span className="target-number" ref={targetNumberRef}>
+          {problem.num2}
+        </span>
+        <span> = </span>
+        <input
+          ref={finalAnswerRef}
+          type="number"
+          className="final-answer-input"
+          value={finalAnswer}
+          onChange={handleFinalAnswerChange}
+          disabled={step < 4}
+        />
+      </div>
+      
+      <div className="hint-container">
+        {/* ステップ4のときだけヒントを表示 */}
+        {step >= 4 && step < 5 && (
+          <span className="hint-text highlight-step4">10 + {sakuranbo2} = ?</span>
+        )}
+      </div>
+
+      <div className="sakuranbo-container">
+        {/* ★さくらんぼの枝の位置や角度を調整したい場合は、ここの数値を変更 */}
+        <svg className="sakuranbo-svg" viewBox="0 0 500 150">
+          {/* 左の枝 */}
+          <line x1={lineStartX} y1="0" x2={lineStartX - 60} y2="60" stroke="black" strokeWidth="2" />
+          {/* 右の枝 */}
+          <line x1={lineStartX} y1="0" x2={lineStartX + 50} y2="60" stroke="black" strokeWidth="2" />
+        </svg>
+        <div className="sakuranbo-inputs">
+          <input
+            ref={sakuranbo1Ref}
+            type="number"
+            value={sakuranbo1}
+            onChange={handleSakuranbo1Change}
+            disabled={step !== 1}
+          />
+          <input
+            ref={sakuranbo2Ref}
+            type="number"
+            value={sakuranbo2}
+            onChange={handleSakuranbo2Change}
+            disabled={step !== 2}
+          />
+        </div>
+      </div>
+
+      <div className="feedback">
+        {/* ステップ5(正解)のときだけメッセージとボタンを表示 */}
+        {step === 5 && (
+          <div>
+            <span>せいかい！🎉</span>
+            <button className="next-button" onClick={goToNextProblem}>
+              つぎのもんだいへ
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);

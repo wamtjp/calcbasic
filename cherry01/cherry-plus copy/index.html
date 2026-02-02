@@ -1,0 +1,29 @@
+<!-- HTML5の文書型宣言 -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <!-- 文字エンコーディングをUTF-8に設定 -->
+  <meta charset="UTF-8">
+  <!-- スマートフォン等での表示を最適化するビューポート設定 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- ページのタイトル -->
+  <title>さくらんぼ計算トレーニング（たし算）</title>
+  <!-- 外部スタイルシートの読み込み -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Reactアプリケーションがマウントされるルート要素 -->
+  <div id="root"></div>
+
+  <!-- ReactとReactDOMのライブラリ読み込み（開発用CDN） -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <!-- ブラウザ内でJSXをトランスパイルするためのBabel -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- メインのReactアプリケーションスクリプト（Babelで処理するため type="text/babel" を指定） -->
+  <script type="text/babel" src="app.js"></script>
+
+</body>
+</html>
