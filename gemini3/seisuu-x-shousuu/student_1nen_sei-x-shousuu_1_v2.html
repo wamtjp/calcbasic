@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>1ねん・せいすう×しょうすうトレーニング</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .full-height { height: 100vh; }
+        .key-btn { font-size: 2.2rem; font-weight: bold; height: 85px; transition: all 0.1s; border-bottom: 4px solid #cbd5e1; }
+        .key-btn:active { transform: translateY(4px); background-color: #f1f5f9; border-bottom-width: 0; }
+        button { touch-action: manipulation; }
+    </style>
+</head>
+<body class="bg-slate-50 overflow-hidden">
+    <div id="root"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        const firebaseConfig = {
+            apiKey: "AIzaSyAOJnHuUqjc8caecnNu_pkul2ORvzWmox0",
+            authDomain: "start01-20260120a-76f80.firebaseapp.com",
+            projectId: "start01-20260120a-76f80",
+            storageBucket: "start01-20260120a-76f80.firebasestorage.app",
+            messagingSenderId: "213284691100",
+            appId: "1:213284691100:web:046aa5f86e4cb1a2562159"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        window.firebaseDB = { db, collection, addDoc, serverTimestamp, collectionName: "logs_1nen" };
+    </script>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const UI_TEXT = {
+            LOGIN_TITLE: "なまえを えらんでね（1ねん）",
+            LABEL_STUDENT: "さん",
+            LABEL_PROBLEM: "もんだい",
+            BTN_DELETE: "けす",
+            BTN_DECIDE: "けってい",
+            BTN_NEXT: "つぎへ",
+            MSG_CORRECT: "⭕ せいかい！",
+            MSG_WRONG: "❌ ざんねん！",
+            COUNT_LABEL: "れんぞくせいかい",
+            PROGRESS_LABEL: "しんちょく",
+            LOADING: "よみこみちゅう..."
+        };
+
+        const APP_ID = "sei_shousuu_1_seq"; // 順番通り（Sequential）版のID
+
+        const classRoster = [
+            { id: "1", name: "生徒1104" }, { id: "2", name: "生徒1107" }, { id: "3", name: "生徒1109" },
+            { id: "4", name: "生徒1114" }, { id: "5", name: "生徒1115" }, { id: "6", name: "生徒1116" },
+            { id: "7", name: "生徒1206" }, { id: "8", name: "生徒1208" }, { id: "9", name: "生徒1211" },
+            { id: "10", name: "生徒1213" }, { id: "11", name: "生徒1215" }, { id: "12", name: "生徒1218" }
+        ];
+
+        function App() {
+            const [currentStudent, setCurrentStudent] = useState(null);
+            const [problems, setProblems] = useState([]);
+            const [currentIndex, setCurrentIndex] = useState(0);
+            const [userInput, setUserInput] = useState("");
+            const [feedback, setFeedback] = useState(null);
+            const [missCount, setMissCount] = useState(0);
+            const [consecutiveCorrect, setConsecutiveCorrect] = useState(0);
+            const [startTime, setStartTime] = useState(null);
+            const [isSubmitting, setIsSubmitting] = useState(false);
+
+            useEffect(() => {
+                fetch('problems_sei-x-shousuu_1.csv')
+                    .then(res => res.text())
+                    .then(text => {
+                        const lines = text.split('\n').slice(1).filter(l => l.trim());
+                        const data = lines.map(l => {
+                            const v = l.split(',');
+                            return { id: v[0], num1: v[3], op: v[4], num2: v[5], ans: v[6].trim() };
+                        });
+                        setProblems(data);
+                    });
+            }, []);
+
+            const startDrill = (student) => { setCurrentStudent(student); setStartTime(Date.now()); };
+            const handleKeyInput = (val) => { if (feedback || isSubmitting) return; setUserInput(prev => prev + val); };
+            const handleDelete = () => { if (feedback || isSubmitting) return; setUserInput(prev => prev.slice(0, -1)); };
+            
+            const checkAnswer = async () => {
+                if (!userInput || isSubmitting) return;
+                const current = problems[currentIndex];
+                
+                if (userInput === current.ans) {
+                    setIsSubmitting(true);
+                    setFeedback(UI_TEXT.MSG_CORRECT);
+                    setConsecutiveCorrect(prev => prev + 1);
+                    try {
+                        const { db, collection, addDoc, serverTimestamp, collectionName } = window.firebaseDB;
+                        await addDoc(collection(db, collectionName), {
+                            app_id: APP_ID,
+                            student_id: currentStudent.id,
+                            student_name: currentStudent.name,
+                            problem: `${current.num1}${current.op}${current.num2}`,
+                            miss_count: missCount,
+                            duration: (Date.now() - startTime) / 1000,
+                            timestamp: serverTimestamp(),
+                            progress: `${currentIndex + 1}/${problems.length}`
+                        });
+                    } catch (e) { console.error(e); }
+                } else {
+                    setMissCount(prev => prev + 1);
+                    setConsecutiveCorrect(0);
+                    setFeedback(UI_TEXT.MSG_WRONG);
+                    setTimeout(() => { setFeedback(null); setUserInput(""); }, 800);
+                }
+            };
+
+            const nextProblem = () => {
+                setCurrentIndex(prev => (prev + 1) % problems.length);
+                setUserInput("");
+                setFeedback(null);
+                setMissCount(0);
+                setStartTime(Date.now());
+                setIsSubmitting(false);
+            };
+
+            if (!currentStudent) {
+                return (
+                    <div className="p-10 text-center">
+                        <h1 className="text-4xl font-bold mb-10 text-slate-700">{UI_TEXT.LOGIN_TITLE}</h1>
+                        <div className="grid grid-cols-4 gap-4">
+                            {classRoster.map(s => (
+                                <button key={s.id} onClick={() => startDrill(s)} className="p-6 bg-white border-2 border-slate-200 rounded-2xl text-xl font-bold shadow-md hover:bg-slate-50 transition">{s.name}</button>
+                            ))}
+                        </div>
+                    </div>
+                );
+            }
+
+            if (problems.length === 0) return <div className="p-10 text-center text-2xl">{UI_TEXT.LOADING}</div>;
+
+            const current = problems[currentIndex];
+
+            return (
+                <div className="flex full-height">
+                    <div className="w-1/2 flex flex-col items-center justify-center border-r-2 border-slate-200 bg-white p-10 relative">
+                        {/* 左上の進捗表示エリアを追加 */}
+                        <div className="absolute top-6 left-6 text-left space-y-4">
+                            <div>
+                                <div className="text-indigo-600 text-sm font-black uppercase tracking-wider">{UI_TEXT.COUNT_LABEL}</div>
+                                <div className="text-3xl font-black text-indigo-700">{consecutiveCorrect} <span className="text-lg">回</span></div>
+                            </div>
+                            <div>
+                                <div className="text-indigo-400 text-sm font-black uppercase tracking-wider">{UI_TEXT.PROGRESS_LABEL}</div>
+                                <div className="text-3xl font-black text-indigo-400">
+                                    {currentIndex + 1} <span className="text-lg">もんめ</span> <span className="text-xl mx-1">/</span> {problems.length} <span className="text-lg">もん</span>
+                                </div>
+                            </div>
+                            <div className="text-slate-300 text-xs font-bold pt-2">
+                                生徒{currentStudent.name} {UI_TEXT.LABEL_STUDENT}
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col items-center">
+                            <div className="text-8xl font-mono font-bold text-slate-800 mb-10">{current.num1} {current.op} {current.num2} = </div>
+                            <div className="w-80 h-32 border-b-4 border-indigo-500 flex items-center justify-center text-7xl font-mono text-indigo-600 bg-indigo-50 rounded-t-xl">{userInput}</div>
+                        </div>
+
+                        <div className="mt-10 h-12 flex items-center justify-center text-4xl font-bold text-center">
+                            {feedback && <span className={feedback.includes('⭕') ? 'text-orange-500' : 'text-blue-500'}>{feedback}</span>}
+                        </div>
+                    </div>
+
+                    <div className="w-1/2 bg-slate-100 p-8 flex flex-col justify-center">
+                        <div className="grid grid-cols-3 gap-3 mb-6">
+                            {[7, 8, 9, 4, 5, 6, 1, 2, 3, 0, "."].map(n => (
+                                <button key={n} onClick={() => handleKeyInput(n.toString())} className="key-btn bg-white rounded-xl shadow-md">{n}</button>
+                            ))}
+                            <button onClick={handleDelete} className="key-btn bg-red-50 text-red-600 rounded-xl shadow-md border-red-200">{UI_TEXT.BTN_DELETE}</button>
+                        </div>
+                        {!feedback ? (
+                            <button onClick={checkAnswer} className="w-full py-8 bg-indigo-600 text-white rounded-2xl text-4xl font-bold shadow-lg border-b-8 border-indigo-800 active:border-b-0">
+                                {UI_TEXT.BTN_DECIDE}
+                            </button>
+                        ) : (
+                            feedback.includes('⭕') && (
+                                <button onClick={nextProblem} className="w-full py-8 bg-green-500 text-white rounded-2xl text-4xl font-bold shadow-lg border-b-8 border-green-700 animate-pulse active:border-b-0">
+                                    {UI_TEXT.BTN_NEXT}
+                                </button>
+                            )
+                        )}
+                    </div>
+                </div>
+            );
+        }
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
